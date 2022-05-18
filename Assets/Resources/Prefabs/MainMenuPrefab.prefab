@@ -1,0 +1,141 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4521760421260799219
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4521760421260799221}
+  - component: {fileID: 4521760421260799218}
+  m_Layer: 0
+  m_Name: MainMenuPrefab
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4521760421260799221
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4521760421260799219}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.7541901, y: 4.163636, z: -2.8503194}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 7438488087276192842}
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4521760421260799218
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4521760421260799219}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4e681f0c39c2014592a17217d29e8bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  molecularBurstSprite: {fileID: 21300000, guid: e7dea380463bc794b90af25347a2043c,
+    type: 3}
+  pusherBulletSprite: {fileID: 21300000, guid: bd6bdf0ec8ca8d94898f4b8cf636620e, type: 3}
+  shurikenSprite: {fileID: 21300000, guid: 5cfe3a52900c0d5419c6e0cd9c4ba47d, type: 3}
+  speedBoostSprite: {fileID: 21300000, guid: 238312296523adb4b8d25b10a257f953, type: 3}
+  timeBombSprite: {fileID: 21300000, guid: 1817840620454d64faf330c8db8a8ac4, type: 3}
+  knockBackGrenadeSprite: {fileID: 21300000, guid: 86e8135dc97b4404a84663c9ad521dc9,
+    type: 3}
+  blunderbussSprite: {fileID: 21300000, guid: c73ba86941c354c4180678ec238ed727, type: 3}
+  slingShotJumpSprite: {fileID: 21300000, guid: 5a5e00228088cee48bd31b4c36cba1b3,
+    type: 3}
+  microMissileSprite: {fileID: 21300000, guid: f2b5bfedd8f39d548acd6f5c23d576a0, type: 3}
+  shotgunSprite: {fileID: 21300000, guid: a720d61d513b267439ef2b602915e39d, type: 3}
+  explosiveDroneSprite: {fileID: 21300000, guid: fe6b1219dfb7cfd4297857f6bd7eb381,
+    type: 3}
+  gravityFieldSprite: {fileID: 21300000, guid: 36e60bbed767e124a8dc0a33d4f655f7, type: 3}
+  gameOverScreen: {fileID: 21300000, guid: 684934f9800f7c743bdb180d39e5d88c, type: 3}
+  menuOpenPosition: {x: 0, y: 0, z: 0}
+  menuClosedPosition: {x: 0, y: 0, z: 0}
+  width: 0
+  height: 0
+  directionToMoveTutorialScreen: {x: 0, y: 0, z: 0}
+  lowerLeftCorner: {x: 0, y: 0, z: 0}
+  headerArea: {x: 0, y: 0, z: 0}
+  menuIcon: {fileID: 0}
+  menuBorderBlockPrefab: {fileID: 7397883772811731275, guid: 9cbf91e4ec8aad14a8b5ff68819e3fae,
+    type: 3}
+  basicWhiteBlockPrefab: {fileID: 3793318505428685999, guid: 78a2dc754e0547c43bafe392cfe0b4a5,
+    type: 3}
+  playGameButtonPrefab: {fileID: 1191553104367900227, guid: 0c383c563d8b68b41b6f4b3b460bbb64,
+    type: 3}
+  highScoreButtonPrefab: {fileID: 6076361004928875032, guid: 9002a8356b878c641ba080311e938a50,
+    type: 3}
+  tutorialButtonPrefab: {fileID: 101423256771553217, guid: 03d2c6f92a9b92749833d626519023a6,
+    type: 3}
+  removeAdsButtonPrefab: {fileID: 163402517542367207, guid: 01c058b59f55eed4a93a4ec8478f8d04,
+    type: 3}
+  loadoutButtonPrefab: {fileID: 8864512965366608474, guid: 7141aa5769e0fd54a99dd585a73a3656,
+    type: 3}
+  loadoutIconPrefab: {fileID: 982811824609353361, guid: 539254650673c3c438164245ef53fcdc,
+    type: 3}
+  iconSelectorPrefab: {fileID: 4911090856539613810, guid: 0e88572f9a2dcd5428ad02b0cbc95efe,
+    type: 3}
+  tapToGoBackPrefab: {fileID: 7127658107280702510, guid: 330275ba924bff148b9272899f1ff5f0,
+    type: 3}
+  firstPlacePrefab: {fileID: 895300198098920036, guid: fc22106f1d6aa8d41a05377cdd65a75f,
+    type: 3}
+  secondPlacePrefab: {fileID: 9170658776086660964, guid: ed0594c088931ff41b63015e7ba4b85e,
+    type: 3}
+  thirdPlacePrefab: {fileID: 1059303839983753563, guid: 439674ada34859c41bbf21f4e3e9f12e,
+    type: 3}
+  titlePrefab: {fileID: 3600511091586965076, guid: 0cd949d3d8c05a04c976666747b56ab4,
+    type: 3}
+  tutorialPagePrefab: {fileID: 8606378660322269451, guid: 9bd428b34fc7f6f4da7ed193e569fd99,
+    type: 3}
+  menuIconPrefab: {fileID: 7092700603455219850, guid: 50fcb7efb98dab647bb3840613ad6469,
+    type: 3}
+  tutorialScreenParentHolder: {fileID: 7438488087276192842}
+  playGameButton: {fileID: 0}
+  loadoutButton: {fileID: 0}
+  HighScoreButton: {fileID: 0}
+  tutorialButton: {fileID: 0}
+  removeAdsButton: {fileID: 0}
+  currentState: 0
+  backgroundSprite: {fileID: 0}
+--- !u!1 &7691658952112198561
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7438488087276192842}
+  m_Layer: 0
+  m_Name: TutorialScreenParent
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7438488087276192842
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7691658952112198561}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 4521760421260799221}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
