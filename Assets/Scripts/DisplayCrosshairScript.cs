@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.UIElements;
 
 public class DisplayCrosshairScript : MonoBehaviour
@@ -72,9 +73,9 @@ public class DisplayCrosshairScript : MonoBehaviour
 	public void UpdateCrosshair(TouchInterface t)
 	{
 		Vector2 difference = t.GetRawDifference();
-		Touch currentTouch = t.GetTouch();
-		Vector2 sinceOriginDifference = currentTouch.position - t.origin;
-		Vector3 touchWorldPosition = Camera.main.ScreenToWorldPoint(new Vector3(currentTouch.position.x, currentTouch.position.y + (Screen.height * 0.15f), 1f));
+		TouchControl currentTouch = t.GetTouch();
+		Vector2 sinceOriginDifference = currentTouch.position.ReadValue() - t.origin;
+		Vector3 touchWorldPosition = Camera.main.ScreenToWorldPoint(new Vector3(currentTouch.position.ReadValue().x, currentTouch.position.ReadValue().y + (Screen.height * 0.15f), 1f));
 		//Vector3 halfwayBetweenOriginAndCurrent = new Vector3(t.origin.x + (sinceOriginDifference.x * 0.5f),t.origin.y + (sinceOriginDifference.y * 0.5f) + (Screen.height * 0.2f),1f);
 		//Vector3 touchWorldPosition = Camera.main.ScreenToWorldPoint(halfwayBetweenOriginAndCurrent);
 		//Vector3 touchWorldPosition = Camera.main.ScreenToWorldPoint(new Vector3(currentTouch.position.x, currentTouch.position.y + (Screen.height * 0.15f), 1f));

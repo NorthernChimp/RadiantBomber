@@ -33,10 +33,10 @@ public class GravityFieldScript : MonoBehaviour
         //transform.localScale = new Vector3(2f, 2f, 2f);
         PlayerScript tempScript = MainScript.thePlayer.GetComponent<PlayerScript>();
         tempScript.AddControlAffector(new ControlsSettingsAffector(ControlsSettingsAffectorType.changeAll, maxSpeedOfPlayer, acceleration, deceleration, endTime));
-        tempScript.AddSettingAffector(new PlayerSettingsAffector(PlayerSettingsAffectorType.makeInvulnerable, new Counter(endTime)));
+        tempScript.AddSettingAffector(new PlayerSettingsAffector(PlayerSettingsAffectorType.makeInvulnerable, new Counter(endTime * 1.125f)));
         affectedMovingBlocks = new List<MovingBlock>();
         deathCounter = new Counter(endTime);
-        thisAbilityInstance = new UtilityAbilityInstance(transform, false, false, deathCounter);
+        thisAbilityInstance = new UtilityAbilityInstance(transform, false, false, deathCounter,false);
         GetComponent<UtilityAbilityScript>().thisAbilityInstance = thisAbilityInstance;
         MainScript.utilityAbilities.Add(thisAbilityInstance);
     }

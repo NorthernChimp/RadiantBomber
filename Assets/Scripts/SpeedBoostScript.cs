@@ -24,7 +24,7 @@ public class SpeedBoostScript : MonoBehaviour
 		thePlayerScript.SetCollisionMovementAffector(new MovementAffector(Vector2.zero, 8.5f, 0f, 1f, MovementAffectorType.getOutOfPlayersWay));
 		thePlayerScript.affecters.Add(new MovementAffector(directionOfBurst, 5f, 0f, time, MovementAffectorType.momentumBased));*/
 		MainScript.CreateConfetti(Color.green, time, 0.05f, 1f,0.6f);
-		thePlayerScript.AddSettingAffector(new PlayerSettingsAffector(PlayerSettingsAffectorType.makeInvulnerable, new Counter(time)));
+		thePlayerScript.AddSettingAffector(new PlayerSettingsAffector(PlayerSettingsAffectorType.makeInvulnerable, new Counter(time * 1.125f)));
 		thePlayerScript.AddSettingAffector(new PlayerSettingsAffector(PlayerSettingsAffectorType.applyMovementAffectorOnCollision, new Counter(time)));
 		thePlayerScript.AddSettingAffector(new PlayerSettingsAffector(PlayerSettingsAffectorType.breakUpDescendingPieceOnCollision, new Counter(time)));
 		thePlayerScript.SetCollisionMovementAffector(new MovementAffector(Vector2.zero, movingBlockBounceOffSpeed, 0f, 1f, MovementAffectorType.bounceOffPlayer));

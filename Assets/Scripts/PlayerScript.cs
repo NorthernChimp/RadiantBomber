@@ -42,6 +42,7 @@ public class PlayerScript : MonoBehaviour
 		rbody = GetComponent<Rigidbody2D>();
 		affecters = new List<MovementAffector>();
 		thisControlsScript = GetComponent<ControlsScript>();
+		
 		//thisPhysicsObjectScript = GetComponent<PhysicsObjectScript>();
 		//thisPhysicsObjectScript.affecters = new List<MovementAffector>();
 		//print("we get here");
@@ -254,10 +255,19 @@ public class PlayerScript : MonoBehaviour
 		{
 			MainScript.readyToEnd = true;
 		}
+		if(health > 3){health = 3;}
+	}
+	public void Revive(){
+		ChangeHealth(3);
 	}
 	public void KillPlayer()
 	{
-		Destroy(gameObject);
+		//Destroy(gameObject);
+		transform.position = Vector3.zero;
+		affecters = new List<MovementAffector>();
+		playerFlashingColorCounter.AddTime(Mathf.Infinity);
+		playerWoundedCounter.AddTime(Mathf.Infinity);
+		GetComponent<ControlsScript>().ResetVelocity();
 		//print(" player is ded");
 	}
 	public PlayerSettings GetDefaultSettings()
@@ -362,6 +372,7 @@ public class PlayerScript : MonoBehaviour
 	public void SetUpPlayer()
     {
 		settingsAffectors = new List<PlayerSettingsAffector>();
+		affecters = new List<MovementAffector>();
 		rbody = GetComponent<Rigidbody2D>();
 		affecters = new List<MovementAffector>();
 		thisControlsScript = GetComponent<ControlsScript>();

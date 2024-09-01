@@ -18,7 +18,7 @@ public class KnockBackExplosionScript : MonoBehaviour
     }
 	public void UseUtility()
     {
-		thisAbilityInstance = new UtilityAbilityInstance(transform,false,false, new Counter(time * 3f));
+		thisAbilityInstance = new UtilityAbilityInstance(transform,false,false, new Counter(time * 3f),false);
 		MainScript.utilityAbilities.Add(thisAbilityInstance);
 		deathCounter = new Counter(time);
 		GetComponent<UtilityAbilityScript>().thisAbilityInstance = thisAbilityInstance;

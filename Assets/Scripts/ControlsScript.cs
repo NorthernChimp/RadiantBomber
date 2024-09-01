@@ -1,9 +1,23 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
+using UnityEngine.UI;
 
 public class ControlsScript : MonoBehaviour
 {
+	public GameObject bulletPrefab;
+	NewControls controls;
+	public InputAction move;
+	public InputAction look;
+	public InputAction escape;
+	bool tappedMenuButton = false;
+	public static bool pressedEscape = false;
+	public InputAction moveAbility;
+	bool hasActivatedMoveAbility = false;
+	public InputAction utilityAbility;
+	bool hasActivatedUtilityAbility = false;
 	public Vector2 movementDirect;
 	public Vector2 velocity;
 	public ControlsSettings defaultSettings;
@@ -31,14 +45,41 @@ public class ControlsScript : MonoBehaviour
 	public string bulletPrefabName = "PusherBulletPrefab";
 	public DisplayCrosshairScript moveDisplayCrosshair;
 	public DisplayCrosshairScript shootDisplayCrosshair;
+	MainMenuScript mainMenuRef; public void SendMainMenuScript(MainMenuScript m){mainMenuRef = m;}
+	public Vector2 GetMoveDir(){return move.ReadValue<Vector2>();}
+	public Vector2 GetShootDir(){return look.ReadValue<Vector2>();}
 	//public DisplayCrosshair moveCrosshair;
 	//public DisplayCrosshair shootCrosshair;
 
 	// Start is called before the first frame update
 	void Start()
 	{
-		
+		bulletPrefab = Resources.Load("Prefabs/" + bulletPrefabName) as GameObject;
+		controls = MainMenuScript.controls;
+		move = controls.Player.Move;
+		look = controls.Player.Look;
+		moveAbility = controls.Player.MovementAbility;
+		utilityAbility = controls.Player.UtilityAbility;
+		escape = controls.Player.Escape;
+		OnEnable();
 	}
+	private void  OnEnable()
+    {
+		move.Enable();
+		look.Enable();
+		moveAbility.Enable();
+		utilityAbility.Enable();
+		escape.Enable();
+    }
+    private void OnDisable()
+    {
+        move.Disable();
+        look.Disable();
+		moveAbility.Disable();
+		utilityAbility.Disable();
+		escape.Disable();
+    }
+
 	public static void ResetCooldowns()
     {
 		currentMovementAbility.utilityCounter.ResetTimer();
@@ -90,29 +131,29 @@ public class ControlsScript : MonoBehaviour
 		defaultSettings = new ControlsSettings(false, maxSpeed, accelerationRate, idleDecelerationRate);
 		affectors = new List<ControlsSettingsAffector>();
 	}
-	void IsThisAnInterface(Touch t)
+	void IsThisAnInterface(TouchControl t)
 	{
 
-		if (moveInterface.isActive && t.fingerId == moveInterface.touchId)
+		if (moveInterface.isActive && t.touchId.ReadValue() == moveInterface.touchId)
 		{
 			MoveInterface(t);
 		}
-		else if (shootInterface.isActive && t.fingerId == shootInterface.touchId)
+		else if (shootInterface.isActive && t.touchId.ReadValue() == shootInterface.touchId)
 		{
 			ShootInterface(t);
 		}
-		else if (tutorialInterface.isActive && t.fingerId == tutorialInterface.touchId)
+		else if (tutorialInterface.isActive && t.touchId.ReadValue() == tutorialInterface.touchId)
 		{
 			TutorialInterface(t);
 		}
-		else if (mainMenuInterface.isActive && t.fingerId == mainMenuInterface.touchId)
+		else if (mainMenuInterface.isActive && t.touchId.ReadValue() == mainMenuInterface.touchId)
 		{
 			MainMenuInterface(t);
 		}
 	}
-	void TutorialInterface(Touch t)
+	void TutorialInterface(TouchControl t)
     {
-		tutorialInterface.lastDirection = (tutorialInterface.lastDirection + t.deltaPosition.normalized) / 2f;
+		tutorialInterface.lastDirection = (tutorialInterface.lastDirection + t.delta.ReadValue().normalized) / 2f;
 		tutorialInterface.currentDirection += tutorialInterface.lastDirection;
 		
 		float distance = tutorialInterface.currentDirection.x * Mathf.Sign(tutorialInterface.currentDirection.x);
@@ -142,13 +183,14 @@ public class ControlsScript : MonoBehaviour
 			}
 		}
     }
-	void MainMenuInterface(Touch t)
+	void MainMenuInterface(TouchControl t)
     {
 		if (!MainScript.paused && !MainMenuScript.isOpeningMenu)
         {
-			Vector2 touchPosInWorld = Camera.main.ScreenToWorldPoint(t.position);
+			Vector2 tPos = t.position.ReadValue();
+			Vector2 touchPosInWorld = Camera.main.ScreenToWorldPoint(tPos);
 			MainScript.mainMenuObject.transform.position = (Vector3)touchPosInWorld + new Vector3(Screen.width * 0.005f, Screen.height * 0.005f, MainScript.mainMenuObject.transform.position.z) + new Vector3(MainScript.blockHeight * 3.5f, MainScript.blockHeight * 3.5f,0f);
-			if ((t.position.x < Screen.width * 0.55f || t.position.y < Screen.height * 0.55f) )
+			if ((tPos.x < Screen.width * 0.55f || tPos.y < Screen.height * 0.55f) )
 			{
 				MainScript.paused = true;
 				mainMenuInterface.CancelTouch();
@@ -162,7 +204,6 @@ public class ControlsScript : MonoBehaviour
     }
 	void OpenTheMenu()
     {
-//		print("open the menu");
 		if (!MainScript.paused && !MainMenuScript.isOpeningMenu)
 		{
 			MainScript.paused = true;
@@ -170,11 +211,20 @@ public class ControlsScript : MonoBehaviour
 			if (MainScript.tutorialMode) { MainScript.EndGame(); }
 			MainScript.mainMenuObject.SendMessage("StartOpeningMenu");
 			mainMenuInterface.isActive = false;
+			
+			MainScript m = Camera.main.GetComponent<MainScript>();
+			m.SetThumbsticks(false);
+			m.DisableTutorial();
+			
+		}else if(!MainMenuScript.isOpeningMenu)
+		{
+			mainMenuRef.HasTappedMenuButton();
 		}
+		pressedEscape = false;
 	}
-	void ShootInterface(Touch t)
+	void ShootInterface(TouchControl t)
 	{
-		if (t.phase == TouchPhase.Stationary)
+		if (t.phase.ReadValue() == UnityEngine.InputSystem.TouchPhase.Stationary)
 		{
 			if (!shootInterface.hasStoppedMoving)
 			{
@@ -187,11 +237,14 @@ public class ControlsScript : MonoBehaviour
 		}
 		else
 		{
-			shootInterface.lastDirection = (shootInterface.lastDirection + t.deltaPosition.normalized) / 2f;
-			shootInterface.currentDirection += shootInterface.lastDirection;
-			if (shootInterface.hasStoppedMoving && t.deltaPosition.magnitude > (Screen.width * 0.03f))
+			Vector2 tDelta = t.delta.ReadValue();
+			//shootInterface.lastDirection = (shootInterface.lastDirection + tDelta.normalized) / 2f;
+			shootInterface.lastDirection = shootInterface.currentDirection;
+			//shootInterface.currentDirection += shootInterface.lastDirection;
+			shootInterface.currentDirection = look.ReadValue<Vector2>();
+			if (shootInterface.hasStoppedMoving && tDelta.magnitude > (Screen.width * 0.03f))
 			{
-				shootInterface.origin = t.position;
+				shootInterface.origin = t.position.ReadValue();
 			}
 			else { shootInterface.timeNotMoving = 0f; }
 		}
@@ -203,13 +256,12 @@ public class ControlsScript : MonoBehaviour
 		float currentMaxSwipeDistance = shootInterface.maxSwipeDistance;
 		///if (moveInterface.doubleClick) { currentMaxSwipeDistance *= 10.5f; }
 		float fraction = distance / currentMaxSwipeDistance;
-
-		if (fraction > 1f) { fraction = 1f; }
+		fraction = shootInterface.currentDirection.magnitude;
+		//if (fraction > 1f) { fraction = 1f; }
 		//MainScript.staticString = fraction.ToString(); ;
-		
 		if (!shootInterface.doubleClick)
 		{
-			if (fraction >= 1f) { leftTrigger = true; } else { leftTrigger = false; }
+			if (fraction >= 0.5f) { leftTrigger = true; } else { leftTrigger = false; }
 		}
 		else
 		{
@@ -226,10 +278,10 @@ public class ControlsScript : MonoBehaviour
 			shootDisplayCrosshair.UpdateCrosshair(shootInterface);
         }
 	}
-	void MoveInterface(Touch t)
+	void MoveInterface(TouchControl t)
 	{
 		//movementDirect = Vector2.down;
-		if(t.phase == TouchPhase.Stationary)
+		if(t.phase.ReadValue() == UnityEngine.InputSystem.TouchPhase.Stationary)
 		{
 			if(!moveInterface.hasStoppedMoving)
 			{
@@ -243,20 +295,20 @@ public class ControlsScript : MonoBehaviour
 		else
 		{
 			if(moveInterface.currentDirection.magnitude > 0.1f && !moveInterface.doubleClick) { moveInterface.currentDirection *= 0.95f;}
-			
-			moveInterface.lastDirection = (moveInterface.lastDirection + t.deltaPosition.normalized)/2f;
+			Vector2 tDelta = t.delta.ReadValue();
+			moveInterface.lastDirection = (moveInterface.lastDirection + tDelta.normalized)/2f;
 			//moveInterface.currentDirection += moveInterface.lastDirection;
 			//print(moveInterface.currentDirection);
 			//if ( !moveInterface.doubleClick) { }
-			if(t.deltaPosition.magnitude > Screen.width * 0.005f) { moveInterface.currentDirection += t.deltaPosition; }
+			if(tDelta.magnitude > Screen.width * 0.005f) { moveInterface.currentDirection += tDelta; }
 				
-			if (moveInterface.hasStoppedMoving && t.deltaPosition.magnitude > (Screen.width * 0.03f))
+			if (moveInterface.hasStoppedMoving && tDelta.magnitude > (Screen.width * 0.03f))
 			{
 				//moveInterface.origin = t.position;
 			}
 			else { moveInterface.timeNotMoving = 0f; }
 		}
-		Vector2 completeDirection = t.position - moveInterface.origin;
+		Vector2 completeDirection = t.position.ReadValue() - moveInterface.origin;
 		//print(completeDirection.magnitude);
 		Vector2 direction = completeDirection.normalized;
 		//float distance = completeDirection.magnitude;
@@ -269,7 +321,8 @@ public class ControlsScript : MonoBehaviour
 		if (!moveInterface.doubleClick)
 		{
 			//movementDirect = direction * (fraction);
-			movementDirect = moveInterface.currentDirection.normalized * moveInterface.maxSwipeDistance;
+			//movementDirect = moveInterface.currentDirection.normalized * moveInterface.maxSwipeDistance;
+			//movementDirect = move.ReadValue<Vector2>().normalized * moveInterface.maxSwipeDistance;
 			//movementDirect = moveInterface.lastDirection.normalized * moveInterface.maxSwipeDistance;
 		}
 		else
@@ -288,7 +341,7 @@ public class ControlsScript : MonoBehaviour
 		}
 		//if(moveInterface.anchor != TouchInterfaceAnchor.leftSide) { movementDirect += Vector2.up * 0.2f; }
 	}
-	void DoesThisStartAnInterface(Touch t)
+	void DoesThisStartAnInterface(TouchControl t)
 	{
 		//if(allTouchInterFaces.Count == 0) { movementDirect = Vector2.up; }
 		foreach (TouchInterface touchInterface in allTouchInterFaces)
@@ -302,11 +355,11 @@ public class ControlsScript : MonoBehaviour
 					case TouchInterfaceAnchor.leftSide:
 						//touchInterface.SetUpTouch(t);
 						//movementDirect = Vector2.right;
-						if (t.position.y < touchInterface.maxHeight && t.position.y > touchInterface.minHeight)
+						if (t.position.ReadValue().y < touchInterface.maxHeight && t.position.ReadValue().y > touchInterface.minHeight)
 						{
 							//touchInterface.SetUpTouch(t);
 						}
-						if (Mathf.Sign(t.position.x - (Screen.width * 0.5f)) == -1f && t.position.y < Screen.height * 0.5f)
+						if (Mathf.Sign(t.position.ReadValue().x - (Screen.width * 0.5f)) == -1f && t.position.ReadValue().y < Screen.height * 0.5f)
 						{
 							//if (touchInterface.doubleClick && touchInterface.utilityAbility.utilityCounter.hasFinished) { print("execute the UtilityAbility"); }
 							touchInterface.SetUpTouch(t);
@@ -323,9 +376,9 @@ public class ControlsScript : MonoBehaviour
 						}
 						break;
 					case TouchInterfaceAnchor.rightSide:
-						if (Mathf.Sign(t.position.x - (Screen.width * 0.5f)) == 1f && t.position.y < Screen.height *0.5f)
+						if (Mathf.Sign(t.position.ReadValue().x - (Screen.width * 0.5f)) == 1f && t.position.ReadValue().y < Screen.height *0.5f)
 						{
-							if (t.position.y < touchInterface.maxHeight && t.position.y > touchInterface.minHeight)
+							if (t.position.ReadValue().y < touchInterface.maxHeight && t.position.ReadValue().y > touchInterface.minHeight)
 							{
 
 							}
@@ -345,9 +398,9 @@ public class ControlsScript : MonoBehaviour
 					case TouchInterfaceAnchor.topCenter:
                         if (MainScript.tutorialMode)
                         {
-							if (t.position.y > Screen.height * 0.6f && t.position.y < Screen.height * 0.9f)
+							if (t.position.ReadValue().y > Screen.height * 0.6f && t.position.ReadValue().y < Screen.height * 0.9f)
 							{
-								if (t.position.x > Screen.width * 0.2f && t.position.x < Screen.width * 0.8f)
+								if (t.position.ReadValue().x > Screen.width * 0.2f && t.position.ReadValue().x < Screen.width * 0.8f)
 								{
 									touchInterface.SetUpTouch(t);
 								}
@@ -356,7 +409,7 @@ public class ControlsScript : MonoBehaviour
 						break;
 					case TouchInterfaceAnchor.topRight:
                         
-						if(t.position .y > (Screen.height * 0.9f) && t.position.x > (Screen.width * 0.9f)  && !MainScript.paused)
+						if(t.position.ReadValue().y > (Screen.height * 0.9f) && t.position.ReadValue().x > (Screen.width * 0.9f)  && !MainScript.paused)
                         {
 							touchInterface.SetUpTouch(t);
                         }
@@ -366,135 +419,207 @@ public class ControlsScript : MonoBehaviour
 		}
 
 	}
+	void CheckTap(TouchControl t)
+	{
+		/*Vector2 pos = t.position.ReadValue();
+		Vector3 realPos = Camera.main.ScreenToWorldPoint(pos);
+		Vector3 diff = realPos - MainMenuScript.MenuButtonPos;diff.z = 0f;
+		if(diff.magnitude < MainScript.blockHeight * 2f)
+		{
+			pressedEscape = true;
+			OpenTheMenu();
+		}*/
+	}
 	void UpdateAllTouchInterfaces()
 	{
 		//print("updating all touch interfaces");
 		
 		//if(Input.touchCount > 0) { movementDirect = Vector2.right; } 
-		foreach(Touch t in Input.touches)
-        {
-			
-		}
-		for (int i = 0; i < Input.touchCount; i++)
+		/*
+		for (int i = 0; i < Touchscreen.current.touches.Count; i++)
 		{
-			Touch t = Input.GetTouch(i);
-			switch (t.phase)
+			TouchControl t = Touchscreen.current.touches[i];
+			
+			switch (t.phase.ReadValue())
 			{
-				case TouchPhase.Began:
+				case UnityEngine.InputSystem.TouchPhase.Began:
                     if (!MainMenuScript.menuIsActive) { DoesThisStartAnInterface(t); }
 					break;
-				case TouchPhase.Stationary:
-				case TouchPhase.Moved:
+				case UnityEngine.InputSystem.TouchPhase.Stationary:
+				case UnityEngine.InputSystem.TouchPhase.Moved:
 					IsThisAnInterface(t);
 					break;
-				
-				case TouchPhase.Ended:
-					DoesThisEndAnInterface(t);
-					break;
-				case TouchPhase.Canceled:
+				case UnityEngine.InputSystem.TouchPhase.Ended:
+				case UnityEngine.InputSystem.TouchPhase.Canceled:
 					DoesThisEndAnInterface(t);
 					break;
 			}
 			//MainScript.staticString = t.fingerId.ToString() + moveInterface.touchId.ToString();
 			
-		}
-        if (moveInterface.isActive) { moveDisplayCrosshair.UpdateCrosshair(moveInterface);  }
-		if (Input.GetKeyDown(KeyCode.Escape))
+		}*/  //DISABLING ALL TOUCH INTERFACES 
+        //if (moveInterface.isActive) { moveDisplayCrosshair.UpdateCrosshair(moveInterface);  }
+		bool tappedMenu = false;
+		for (int i = 0; i < Touchscreen.current.touches.Count; i++)
 		{
-			print("presses escape");
+			TouchControl t = Touchscreen.current.touches[i];
+			switch (t.phase.ReadValue())
+			{
+				case UnityEngine.InputSystem.TouchPhase.Began:
+					Vector3 realPos = Camera.main.ScreenToWorldPoint(t.position.ReadValue());
+					Vector3 diff = realPos - MainScript.menuButton.transform.position;diff.z = 0f;
+					//Debug.Log(diff.magnitude + " from Menu button");
+					if(diff.magnitude < MainScript.blockHeight * 2f){tappedMenu = true;}
+				break;
+			}
+		}
+		if (escape.triggered || tappedMenu)
+		//if (escape.ReadValue<float>() > 0f || tappedMenu)
+		{
+			pressedEscape = true;
 			OpenTheMenu();
+		}
+		if(moveAbility.ReadValue<float>() > 0.5f ||OnScreenStickHandler.movementDoubleClick)
+		{
+			hasActivatedMoveAbility = true;
+			//Debug.Log("you are activating moveability");
+		}
+		if(utilityAbility.ReadValue<float>() > 0.5f || OnScreenStickHandler.utilityDoubleClick){
+			hasActivatedUtilityAbility = true;
 		}
 		//if(moveInterface.hasCrosshair){if(moveInterface.relevantCrosshair.isVisible){moveInterface.relevantCrosshair.UpdateCrosshair(moveInterface);}}
 		//if(shootInterface.hasCrosshair){if(shootInterface.relevantCrosshair.isVisible){shootInterface.relevantCrosshair.UpdateCrosshair(shootInterface);}}
 	}
+	public void ResetVelocity(){velocity = Vector2.zero;}
 	public Vector2 Controls(Vector2 moveDirect, float timePassed)
 	{
 		//print(shootInterface.utilityAbility.prefabName);
-		if (!shootInterface.utilityAbility.utilityCounter.hasFinished) { shootInterface.utilityAbility.utilityCounter.AddTime(timePassed); }
-        if (!moveInterface.utilityAbility.utilityCounter.hasFinished) { moveInterface.utilityAbility.utilityCounter.AddTime(timePassed); }
-		
+		//if (!shootInterface.utilityAbility.utilityCounter.hasFinished) { shootInterface.utilityAbility.utilityCounter.AddTime(timePassed); }
+        //if (!moveInterface.utilityAbility.utilityCounter.hasFinished) { moveInterface.utilityAbility.utilityCounter.AddTime(timePassed); }
+		if(!currentMovementAbility.utilityCounter.hasFinished){currentMovementAbility.utilityCounter.AddTime(timePassed);}
+		if(!currentUtilityAbility.utilityCounter.hasFinished){currentUtilityAbility.utilityCounter.AddTime(timePassed);}
 		if (!currentTriggerAbility.triggerCounter.hasFinished) { currentTriggerAbility.triggerCounter.AddTime(Time.fixedDeltaTime); }
 		ControlsSettings tempSettings = GetActualSettings(timePassed);
 		
 		//print(tempSettings.maxSpeed + " max speed");
 		//print(defaultSettings.controlsPaused);
 		//print(tempSettings.controlsPaused + "affectors currently " + affectors.Count);
+		Vector2 moveDir = move.ReadValue<Vector2>();
+		//Debug.Log(moveDir);
 		if (!tempSettings.controlsPaused)
 		{
-
-			if (movementDirect != Vector2.zero)
+			
+			if (moveDir != Vector2.zero)
+			//if (movementDirect != Vector2.zero)
 			{
-				velocity += tempSettings.accelerationRate * movementDirect * Time.fixedDeltaTime;
-
+				//velocity += tempSettings.accelerationRate * movementDirect * Time.fixedDeltaTime;
+				
+				
+				velocity += tempSettings.accelerationRate * moveDir.normalized * Time.fixedDeltaTime;
 				if (velocity.magnitude > tempSettings.maxSpeed) { velocity = velocity.normalized * tempSettings.maxSpeed; }
 			}
 		}
-        if (!moveInterface.isActive) { movementDirect = Vector2.zero; } 
-		if(!shootInterface.isActive) { leftTrigger = false; }
-		if (velocity.magnitude > 0f && (movementDirect == Vector2.zero || tempSettings.controlsPaused || Vector2.Dot(movementDirect, velocity) < 0f))
+        //if (!moveInterface.isActive) { movementDirect = Vector2.zero; } 
+		//if(!shootInterface.isActive) { leftTrigger = false; }
+		if (velocity.magnitude > 0f && (moveDir == Vector2.zero || tempSettings.controlsPaused || Vector2.Dot(moveDir, velocity) < 0f))
 		{
 			float amountToDecrease = tempSettings.idleDecelerationRate * Time.fixedDeltaTime;
 			if (amountToDecrease > velocity.magnitude) { velocity = Vector2.zero; } else { velocity -= (velocity.normalized) * amountToDecrease; }
 		}
-		if (leftTrigger && currentTriggerAbility.triggerCounter.hasFinished && !tempSettings.controlsPaused) { FireLeftTrigger(); }
-		if (shootAbilityTrigger && shootInterface.utilityAbility.utilityCounter.hasFinished && !tempSettings.controlsPaused) { UseUtilityAbility(); }
-		if (moveAbilityTrigger && moveInterface.utilityAbility.utilityCounter.hasFinished && !tempSettings.controlsPaused) { UseMovementAbility(); }
+		Vector2 shootDir = look.ReadValue<Vector2>();
+		
+		//if (leftTrigger && currentTriggerAbility.triggerCounter.hasFinished && !tempSettings.controlsPaused) { FireLeftTrigger(); }
+		if (shootDir.magnitude > 0.5f && currentTriggerAbility.triggerCounter.hasFinished && !tempSettings.controlsPaused) { FireLeftTrigger(); }
+		if ((shootAbilityTrigger || hasActivatedUtilityAbility) && currentUtilityAbility.utilityCounter.hasFinished && !tempSettings.controlsPaused) { UseUtilityAbility(); }
+		if ((moveAbilityTrigger || hasActivatedMoveAbility) && currentMovementAbility.utilityCounter.hasFinished && !tempSettings.controlsPaused) { UseMovementAbility(); }
 		moveDirect += velocity * Time.fixedDeltaTime;
+		hasActivatedMoveAbility = false;
+		hasActivatedUtilityAbility = false;
+		pressedEscape = false;
 		return moveDirect;
 	}
+
 	public void UseUtilityAbility()
 	{
+		//Debug.Log("using utility ability at " + Time.time);
+
 		//utilityAbilityTimer.ResetTimer();
+		bool takesDirection = currentUtilityAbility.takesDirection;
+		Vector2 shootDir = look.ReadValue<Vector2>();
+		bool canProceed = true;//assume you can Use the Ability
+		if(takesDirection && shootDir == Vector2.zero){canProceed = false;}
 		//utilityAbilityTimer.hasFinished = false;
-		shootInterface.utilityAbility.utilityCounter.ResetTimer();
-		//MainScript.staticString = "you have instantiated";
-		GameObject temp = (GameObject)Instantiate(Resources.Load("Prefabs/" + currentUtilityAbility.prefabName), transform.position, Quaternion.identity);
-		temp.transform.localScale = new Vector3(MainScript.blockWidth / 0.16f, MainScript.blockWidth / 0.16f, 1f);
-		if(currentUtilityAbility.takesDirection)
+		if(canProceed)
 		{
-			//Vector2 direct = shootInterface.GetRawDifference().normalized;
-			temp.transform.SendMessage("SetDirection",shootInterface.currentDirection.normalized);
-			
-			//
-			//if(shootInterface.utilityAbility.)
-		}
-		//MainScript.utilityAbilities.Add(new UtilityAbilityReference(temp.transform));
-		temp.transform.SendMessage("UseUtility");
-        if (currentUtilityAbility.takesDirection)
-        {
-			temp.transform.GetComponent<UtilityAbilityScript>().thisAbilityInstance.relevantTouchInterface = shootInterface;
-		}
+			//shootInterface.utilityAbility.utilityCounter.ResetTimer();
+			currentUtilityAbility.utilityCounter.ResetTimer();
+			//MainScript.staticString = "you have instantiated";
+			GameObject temp = (GameObject)Instantiate(Resources.Load("Prefabs/" + currentUtilityAbility.prefabName), transform.position, Quaternion.identity);
+			temp.transform.localScale = new Vector3(MainScript.blockWidth / 0.16f, MainScript.blockWidth / 0.16f, 1f);
+			if(takesDirection)
+			{
+				//Vector2 direct = shootInterface.GetRawDifference().normalized;
+				
+				if(shootDir != Vector2.zero){
+					temp.transform.SendMessage("SetDirection",shootDir.normalized);
+				}
+				
+				
+				//
+				//if(shootInterface.utilityAbility.)
+			}
+			//MainScript.utilityAbilities.Add(new UtilityAbilityReference(temp.transform));
+			temp.transform.SendMessage("UseUtility");
+			if (currentUtilityAbility.takesDirection)
+			{
+				UtilityAbilityInstance instance = temp.transform.GetComponent<UtilityAbilityScript>().thisAbilityInstance;
+				instance.relevantTouchInterface = shootInterface;
+				//if(instance.requiresUpdate){MainScript.utilityAbilities.Add(instance);}
+			}
+			OnScreenStickHandler.utilityDoubleClick = false;
+			MainScript.interfaceHighlightPanels[1].ChangeColor(Color.grey);
+			if (shootInterface.hasCrosshair) { shootDisplayCrosshair.ChangeVisibility(false); }
+			if (shootInterface.utilityAbility.cancelsTouchWhenUsed) { shootInterface.CancelTouch(); } else { shootInterface.doubleClick = false; }
+		}	
 		shootAbilityTrigger = false;
-		if (shootInterface.hasCrosshair) { shootDisplayCrosshair.ChangeVisibility(false); }
-        if (shootInterface.utilityAbility.cancelsTouchWhenUsed) { shootInterface.CancelTouch(); } else { shootInterface.doubleClick = false; }
-			
+		
 	}
 	public void UseMovementAbility()
 	{
-		moveInterface.utilityAbility.utilityCounter.ResetTimer();
-		GameObject temp = (GameObject)Instantiate(Resources.Load("Prefabs/" + currentMovementAbility.prefabName), transform.position, Quaternion.identity);
-		if (currentMovementAbility.takesDirection)
+		bool takesDirection = currentMovementAbility.takesDirection;
+		Vector2 moveDir = move.ReadValue<Vector2>();
+		bool canProceed = true;//assume you can Use the Ability
+		if(takesDirection && moveDir == Vector2.zero){canProceed = false;}//if it requires direction and we have no direction we cannot proceed
+		if(canProceed)
 		{
-			Vector2 direct = moveInterface.GetRawDifference().normalized;
-			//temp.transform.SendMessage("SetDirection", direct);\
-			temp.transform.SendMessage("SetDirection", moveInterface.currentDirection.normalized);
+			currentMovementAbility.utilityCounter.ResetTimer();
+			GameObject temp = (GameObject)Instantiate(Resources.Load("Prefabs/" + currentMovementAbility.prefabName), transform.position, Quaternion.identity);
+			if (takesDirection)
+			{
+				
+				if(moveDir != Vector2.zero){
+					temp.transform.SendMessage("SetDirection", moveDir.normalized);
+				}
+				//temp.transform.SendMessage("SetDirection", direct);\
+				
+			}
+			OnScreenStickHandler.movementDoubleClick = false;
+			MainScript.interfaceHighlightPanels[0].ChangeColor(Color.grey);
+			temp.transform.SendMessage("UseUtility");
+			if (moveInterface.hasCrosshair) { moveDisplayCrosshair.ChangeVisibility(false); }
+			//moveInterface.CancelTouch();
+			/*utilityAbilityTimer.ResetTimer();
+			utilityAbilityTimer.hasFinished = false;
+			GameObject temp = (GameObject)Instantiate(Resources.Load("Prefabs/" + currentUtilityAbility.prefabName), transform.position, Quaternion.identity);
+			temp.transform.SendMessage("ApplyKnockBack");*/
+			if (moveInterface.utilityAbility.cancelsTouchWhenUsed) { moveInterface.CancelTouch(); } else { moveInterface.doubleClick = false; }
 		}
-		
-		temp.transform.SendMessage("UseUtility");
-        if (moveInterface.hasCrosshair) { moveDisplayCrosshair.ChangeVisibility(false); }
-		//moveInterface.CancelTouch();
-		/*utilityAbilityTimer.ResetTimer();
-		utilityAbilityTimer.hasFinished = false;
-		GameObject temp = (GameObject)Instantiate(Resources.Load("Prefabs/" + currentUtilityAbility.prefabName), transform.position, Quaternion.identity);
-		temp.transform.SendMessage("ApplyKnockBack");*/
-		if (moveInterface.utilityAbility.cancelsTouchWhenUsed) { moveInterface.CancelTouch(); } else { moveInterface.doubleClick = false; }
 		moveAbilityTrigger = false;
 	}
-	void DoesThisEndAnInterface(Touch t)
+	void DoesThisEndAnInterface(TouchControl t)
 	{
 		foreach (TouchInterface touchInterface in allTouchInterFaces)
 		{
-			if (touchInterface.isActive && touchInterface.touchId == t.fingerId) 
+			if (touchInterface.isActive && touchInterface.touchId == t.touchId.ReadValue()) 
 			{
 				if(touchInterface.hasCrosshair)
 				{
@@ -565,24 +690,28 @@ public class ControlsScript : MonoBehaviour
 	}
 	void FireLeftTrigger()
 	{
-		//print("firing left trigger");
 		
 		/*Vector2 mousePosition = Camera.main.ScreenToWorldPoint((Vector3)Input.mousePosition);
 		Vector2 direction = mousePosition - (Vector2)transform.position;*/
 		//Vector2 rawDifference = shootInterface.GetRawDifference();
-		Vector2 direction = shootInterface.currentDirection;
-		if (direction == Vector2.zero) { }
-		currentTriggerAbility.triggerCounter.ResetTimer();
-		//bulletCounter.ResetTimer();
-		//bulletCounter.hasFinished = false;
-		GameObject bullet = (GameObject)Instantiate(Resources.Load("Prefabs/" + currentTriggerAbility.prefabName), transform.position, Quaternion.identity);
-		bullet.transform.localScale = new Vector3(MainScript.blockWidth / 0.16f, MainScript.blockWidth / 0.16f, 1f);
-		bullet.SendMessage("SetDirection", direction.normalized);
+		Vector2 direction = look.ReadValue<Vector2>().normalized;
+		if (direction != Vector2.zero) 
+		{
+			currentTriggerAbility.triggerCounter.ResetTimer();
+			//bulletCounter.ResetTimer();
+			//bulletCounter.hasFinished = false;
+			//GameObject bullet = (GameObject)Instantiate(bulletPrefab, transform.position, Quaternion.identity);
+			GameObject bullet = (GameObject)Instantiate(Resources.Load("Prefabs/" + currentTriggerAbility.prefabName) as GameObject, transform.position, Quaternion.identity);
+			bullet.transform.localScale = new Vector3(MainScript.blockWidth / 0.16f, MainScript.blockWidth / 0.16f, 1f);
+			bullet.SendMessage("SetDirection", direction.normalized);
+		}
+		
 	}
 	// Update is called once per frame
 	void Update()
 	{
-		UpdateAllTouchInterfaces();
+		if(Time.time > 0.25f){UpdateAllTouchInterfaces();}
+		
         
 		/*if (Input.GetKeyDown(KeyCode.W)) { movementDirect += Vector2.up; }
         if (Input.GetKeyDown(KeyCode.A)) { movementDirect += Vector2.left; }
@@ -653,7 +782,7 @@ public class TouchInterface
 	public float lastTimeTouchBegan = 0f;
 	public bool isActive = false;
 	public bool doubleClick = false;
-	public Touch currentTouch;
+	public TouchControl currentTouch;
 	public int touchId;
 	public TouchInterfaceAnchor anchor;
 	public float minHeight;
@@ -679,28 +808,28 @@ public class TouchInterface
 		maxSwipeDistance = theMaxSwipeDistance;
 
 	}
-	public Touch GetTouch()
+	public TouchControl GetTouch()
     {
-		for(int i = 0;i < Input.touchCount; i++)
+		for(int i = 0;i < Touchscreen.current.touches.Count; i++)
         {
-			Touch temp = Input.GetTouch(i);
-			if(temp.fingerId == touchId)
+			TouchControl temp = Touchscreen.current.touches[i];
+			
+			if(temp.touchId.ReadValue() == touchId)
             {
 				return temp;
             }
         }
-		return new Touch();
+		return new TouchControl();
     }
 	
 	public Vector2 GetRawDifference()
 	{
 		//int i = 0;
-		Touch temp;
-		foreach(Touch t in Input.touches)
+		foreach(TouchControl t in Touchscreen.current.touches)
         {
-			if(t.fingerId == touchId)
+			if(t.touchId.ReadValue() == touchId)
             {
-				Vector2 difference = t.position - origin;
+				Vector2 difference = t.position.ReadValue() - origin;
 				return difference;
 			}
         }
@@ -716,37 +845,37 @@ public class TouchInterface
 	public Vector2 GetDirection()
 	{
 		int i = 0;
-		Touch temp = Input.GetTouch(i);
-		while(temp.fingerId != touchId && i < Input.touchCount)
+		TouchControl temp = Touchscreen.current.touches[i];
+		while(temp.touchId.ReadValue() != touchId && i < Touchscreen.current.touches.Count)
 		{
 			i++;
-			temp = Input.GetTouch(i);
+			temp = Touchscreen.current.touches[i];
 		}
-		Vector2 difference = temp.position - origin;
+		Vector2 difference = temp.position.ReadValue() - origin;
 		return difference.normalized;
 	}
 	public float GetDistance()
 	{
 		int i = 0;
-		Touch temp = Input.GetTouch(i);
-		while(temp.fingerId != touchId && i < Input.touchCount)
+		TouchControl temp = Touchscreen.current.touches[i];
+		while(temp.touchId.ReadValue() != touchId && i < Touchscreen.current.touches.Count)
 		{
 			i++;
-			temp = Input.GetTouch(i);
+			temp = Touchscreen.current.touches[i];
 		}
-		Vector2 difference = temp.position - origin;
+		Vector2 difference = temp.position.ReadValue() - origin;
 		return difference.magnitude;
 	}
 	public float GetFraction()
 	{
 		int i = 0;
-		Touch temp = Input.GetTouch(i);
-		while(temp.fingerId != touchId && i < Input.touchCount)
+		TouchControl temp = Touchscreen.current.touches[i];
+		while(temp.touchId.ReadValue() != touchId && i < Touchscreen.current.touches.Count)
 		{
 			i++;
-			temp = Input.GetTouch(i);
+			temp = Touchscreen.current.touches[i];
 		}
-		Vector2 difference = temp.position - origin;
+		Vector2 difference = temp.position.ReadValue() - origin;
 		if(difference.magnitude > 1f){difference = difference.normalized;}
 		return difference.magnitude;
 	}
@@ -756,22 +885,23 @@ public class TouchInterface
 		if (typeOfInterface == InterfaceType.Shoot) { referenceInt = 1; }
 		return (MainScript.interfaceHighlightPanels[referenceInt]);
 	}
-	public void SetUpTouch(Touch t)
+	public void SetUpTouch(TouchControl t)
 	{
 		currentDirection = Vector2.zero;
 		currentTouch = t;
 		isActive = true;
-		touchId = t.fingerId;
-		origin = t.position;
+		touchId = t.touchId.ReadValue();
+		origin = t.position.ReadValue();
 		
 		//if(hasCrosshair){relevantCrosshair.isVisible = true;}
 		float timeDifference = MainScript.currentGame.timeSinceStart - lastTimeTouchBegan;
 		//MainScript.staticString = timeDifference.ToString();
-		doubleClick = false;
+		//Debug.Log(timeDifference + " is the time difference (since last tap???");
+		doubleClick = timeDifference < 0.2f;//false;
 		//if(timeDifference < 0.25f){doubleClick = true;}
 		if(typeOfInterface != InterfaceType.Passive && typeOfInterface != InterfaceType.tutorial)
         {
-			if (t.tapCount > 1 && utilityAbility.utilityCounter.hasFinished) { doubleClick = true; }
+			//if (t.tapCount > 1 && utilityAbility.utilityCounter.hasFinished) { doubleClick = true; }**need to put this back%%%!!!!!
 			TouchInterfaceHighlightPanel tempPanel = GetRelevantPanel();
 			if (doubleClick)
 			{
@@ -799,7 +929,17 @@ public class TouchInterface
 	public void CancelTouch()
 	{
 		isActive = false;
-		if(typeOfInterface != InterfaceType.Passive) { GetRelevantPanel().ChangeColor(Color.gray); if (hasUtility) { if (doubleClick && utilityAbility.utilityCounter.hasFinished && utilityAbility.activation == UtilityActivatesOn.ends) { ActivateAbility(); } } }
+		if(typeOfInterface != InterfaceType.Passive) 
+		{ 
+			GetRelevantPanel().ChangeColor(Color.gray); 
+			if (hasUtility)
+			{
+				if (doubleClick && utilityAbility.utilityCounter.hasFinished && utilityAbility.activation == UtilityActivatesOn.ends) 
+				{ 
+					//ActivateAbility(); 
+				} 
+			} 
+		}
 		if(typeOfInterface == InterfaceType.tutorial)
 		{
             if (ControlsScript.hasChangedTutorialPage)
@@ -993,13 +1133,16 @@ public class TouchInterfaceHighlightPanel
 		UtilityAbility relevantAbility;
 		if(theTypeOfinterface == InterfaceType.Move)
         {
+			//Debug.Log("updating mnove");
 			relevantAbility = ControlsScript.currentMovementAbility;
         }
         else
         {
+			//Debug.Log("updating utility");
 			relevantAbility = ControlsScript.currentUtilityAbility;
         }
 		float remainingTime = relevantAbility.utilityCounter.currentTime / relevantAbility.utilityCounter.expiryTime;
+		//Debug.Log(relevantAbility.abilityName + " has been counting for " + relevantAbility.utilityCounter.currentTime);
         if (relevantAbility.utilityCounter.hasFinished) { remainingTime = 1f; }
 		float currentRedBarWidth = localScaleMaxWidth - (remainingTime * localScaleMaxWidth);
 		float missingRedBarWidth = localScaleMaxWidth - currentRedBarWidth;

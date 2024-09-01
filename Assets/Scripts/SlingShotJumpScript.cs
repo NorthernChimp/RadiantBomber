@@ -29,7 +29,7 @@ public class SlingShotJumpScript : MonoBehaviour
 	public void UseUtility()
 	{
 		transform.parent = MainScript.thePlayer;
-		thisAbilityInstance = new UtilityAbilityInstance(transform, false, false, new Counter(time));
+		thisAbilityInstance = new UtilityAbilityInstance(transform, false, false, new Counter(time),false);
 		GetComponent<UtilityAbilityScript>().thisAbilityInstance = thisAbilityInstance;
 		PlayerScript thePlayerScript = MainScript.thePlayer.GetComponent<PlayerScript>();
 		//thePlayerScript.playerFlashingColorCounter = new Counter()
@@ -46,7 +46,7 @@ public class SlingShotJumpScript : MonoBehaviour
 		thePlayerScript.SetCollisionMovementAffector(new MovementAffector(Vector2.zero, movingBlockBounceOffSpeed, 0f, 1f, MovementAffectorType.bounceOffPlayer));
 		thePlayerScript.AddSettingAffector(new PlayerSettingsAffector(PlayerSettingsAffectorType.suspendGraityOnCollision, new Counter(time * firstSegmentFraction)));
 		thePlayerScript.StopControls(time * firstSegmentFraction);
-		thePlayerScript.AddSettingAffector(new PlayerSettingsAffector(PlayerSettingsAffectorType.makeInvulnerable, new Counter(time * 0.85f)));
+		thePlayerScript.AddSettingAffector(new PlayerSettingsAffector(PlayerSettingsAffectorType.makeInvulnerable, new Counter(time * 0.95f)));
 		thePlayerScript.affecters.Add(new MovementAffector(directionOfJump, 3f, 0f, time * firstSegmentFraction, MovementAffectorType.momentumBased));
 		thePlayerScript.affecters.Add(new MovementAffector(directionOfJump, speed, speedDecay, time, MovementAffectorType.momentumBased));
 		//thePlayerScript.AddSettingAffector(new PlayerSettingsAffector(PlayerSettingsAffectorType.breakUpDescendingPieceOnCollision, new Counter(time)));

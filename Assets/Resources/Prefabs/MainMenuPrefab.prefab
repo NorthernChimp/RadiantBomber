@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4521760421260799221}
   - component: {fileID: 4521760421260799218}
+  - component: {fileID: 569488811140978343}
   m_Layer: 0
   m_Name: MainMenuPrefab
   m_TagString: Untagged
@@ -24,13 +25,14 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4521760421260799219}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.7541901, y: 4.163636, z: -2.8503194}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7438488087276192842}
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4521760421260799218
 MonoBehaviour:
@@ -44,6 +46,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4e681f0c39c2014592a17217d29e8bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  escape:
+    m_Name: Escape
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 19288b95-1529-47af-9a1e-822a2dc777ba
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+  tutorialButtons: []
   molecularBurstSprite: {fileID: 21300000, guid: e7dea380463bc794b90af25347a2043c,
     type: 3}
   pusherBulletSprite: {fileID: 21300000, guid: bd6bdf0ec8ca8d94898f4b8cf636620e, type: 3}
@@ -109,6 +121,37 @@ MonoBehaviour:
   removeAdsButton: {fileID: 0}
   currentState: 0
   backgroundSprite: {fileID: 0}
+--- !u!114 &569488811140978343
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4521760421260799219}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Actions: {fileID: -944628639613478452, guid: c7b22ddeb418353439548088cd8c9b5e,
+    type: 3}
+  m_NotificationBehavior: 0
+  m_UIInputModule: {fileID: 0}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents: []
+  m_NeverAutoSwitchControlSchemes: 0
+  m_DefaultControlScheme: 
+  m_DefaultActionMap: Player
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 0}
 --- !u!1 &7691658952112198561
 GameObject:
   m_ObjectHideFlags: 0
@@ -132,10 +175,11 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7691658952112198561}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4521760421260799221}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

@@ -2,14 +2,26 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.Purchasing;
+using TMPro;
 
 public class MainScript : MonoBehaviour
 {
-	public static UnityEngine.UI.Text scoreText;
-	public static UnityEngine.UI.Text movementAbilityText;
-	public static UnityEngine.UI.Text triggerAbilityText;
-	public static UnityEngine.UI.Text utilityAbilityText;
+	public static TextMeshProUGUI scoreTextMesh;
+	Counter menuTapCounter = new Counter(0.5f);
+	public GameObject menuButtonPrefab;
+	public static SpriteRenderer menuButton;
+	[SerializeField]
+	public static bool hasControllerInput = false;
+	public TextMeshProUGUI movementAbilityTextMesh;
+	public ControlsScript controlScript;
+	public GameObject tutorialGameObject;
+	public static TutorialPageScript tutorialMessage;
+	public TextMeshProUGUI triggerAbilityTextMesh;
+	public Image[] touchscreenThumbsticks;
+	public TextMeshProUGUI utilityAbilityTextMesh;
 	public RectTransform scoreTextTransform;
 	public RectTransform movementAbilityTextTransform;
 	public RectTransform triggerAbilityTextTransform;
@@ -18,7 +30,7 @@ public class MainScript : MonoBehaviour
 	public static Counter waitToOpenMenuAfterDeath;
 
 	public static bool isShowingAd = false;
-
+	public InterstitialAdExample advertisement;
 	public Button removeAdsButton;
 	public Transform iapManagerTransform;
 
@@ -68,6 +80,7 @@ public class MainScript : MonoBehaviour
 	public static List<HeartIcon> heartDisplayIcons;
 	public static List<MovingBlock> allMovingBlocks;
 	public static List<UnityEngine.UI.Text> mainMenuTextBoxes;
+	public static List<TextMeshProUGUI> mainMenuTextMeshBoxes;
 	//public static UnityEngine.UI.Text [] mainMenuTextBoxes;
 	public static List<TouchInterfaceHighlightPanel> interfaceHighlightPanels;
 
@@ -83,16 +96,24 @@ public class MainScript : MonoBehaviour
 		blocksToGetOutOfTheWay = new List<MovingBlock>();
 		blocksToRemove = new List<EmptyBlock>();
 		emptyBlockRemoverCounter = new Counter(0.07f);
-		UnityEngine.UI.Text movementAbilityCanvasText = movementAbilityTextTransform.GetComponent<UnityEngine.UI.Text>();
+		//UnityEngine.UI.Text movementAbilityCanvasText = movementAbilityTextTransform.GetComponent<UnityEngine.UI.Text>();
 		int textSize = (int)(Screen.width / 20f);
-		movementAbilityCanvasText.fontSize = textSize;
-		UnityEngine.UI.Text triggerAbilityCanvasText = triggerAbilityTextTransform.GetComponent<UnityEngine.UI.Text>();
-		triggerAbilityCanvasText.fontSize = textSize;
-		UnityEngine.UI.Text utilityAbilityCanvasText = utilityAbilityTextTransform.GetComponent<UnityEngine.UI.Text>();
-		utilityAbilityCanvasText.fontSize = textSize;
-		mainMenuTextBoxes = new List<UnityEngine.UI.Text>() { movementAbilityCanvasText, triggerAbilityCanvasText, utilityAbilityCanvasText};
-		scoreText = scoreTextTransform.GetComponent<UnityEngine.UI.Text>();
-		scoreText.fontSize = (int)(Screen.width / 20f);
+		//movementAbilityCanvasText.fontSize = textSize;
+		//movementAbilityTextMesh = movementAbilityTextTransform.GetComponent<TextMeshProUGUI>();
+		//Debug.Log(movementAbilityTextMesh.name);
+		movementAbilityTextMesh.fontSize = textSize;
+		//UnityEngine.UI.Text triggerAbilityCanvasText = triggerAbilityTextTransform.GetComponent<UnityEngine.UI.Text>();
+		//triggerAbilityTextMesh = triggerAbilityTextTransform.GetComponent<TextMeshProUGUI>();
+		//triggerAbilityCanvasText.fontSize = textSize;
+		//UnityEngine.UI.Text utilityAbilityCanvasText = utilityAbilityTextTransform.GetComponent<UnityEngine.UI.Text>();
+		//utilityAbilityTextMesh = utilityAbilityTextTransform.GetComponent<TextMeshProUGUI>();
+		//utilityAbilityCanvasText.fontSize = textSize;
+		scoreTextMesh = scoreTextTransform.GetComponent<TextMeshProUGUI>();
+		scoreTextMesh.fontSize = (int)(Screen.width/20f);
+		//mainMenuTextBoxes = new List<UnityEngine.UI.Text>() { movementAbilityCanvasText, triggerAbilityCanvasText, utilityAbilityCanvasText};
+		mainMenuTextMeshBoxes = new List<TextMeshProUGUI>(){movementAbilityTextMesh,triggerAbilityTextMesh,utilityAbilityTextMesh};
+		utilityAbilityTextMesh.fontSize = textSize;
+		triggerAbilityTextMesh.fontSize = textSize;
 		//scoreText.text = "";
 		interfaceHighlightPanels = new List<TouchInterfaceHighlightPanel>();
 		
@@ -103,9 +124,16 @@ public class MainScript : MonoBehaviour
 		Vector3 originPosition = upperLeftCorner + new Vector3(blockWidth * 2f,blockWidth * -2f,0f);
 		//Vector3 originPosition = upperLeftCorner;
 		blockLocalScale = blockWidth / 0.16f;
+		tutorialMessage = Instantiate(tutorialGameObject,Vector3.up * Screen.height * 0.0035f + Vector3.forward,Quaternion.identity).GetComponent<TutorialPageScript>();
+		tutorialMessage.transform.localScale = new Vector3(blockLocalScale,blockLocalScale,1f) * 1f;
+		tutorialMessage.gameObject.SetActive(false);
+		tutorialMessage.SetupTutorialPage();
 
-		//mainMenuObject = Instantiate(mainMenuPrefab, new Vector3(0f, 0f, -3f), Quaternion.identity);
-		mainMenuObject = Instantiate(mainMenuPrefab, new Vector3(blockWidth * 0.5f, blockWidth * 0.5f, -3f), Quaternion.identity);
+		mainMenuObject = Instantiate(mainMenuPrefab, new Vector3(0f + blockWidth * 0.5f, 0f, -3f), Quaternion.identity);
+		MainMenuScript menuScript = mainMenuObject.GetComponent<MainMenuScript>();
+		Vector3 menuButtonPos = upperLeftCorner + new Vector3(blockWidth * 1.25f,blockWidth * -5f,0f);
+		menuButton = Instantiate(menuButtonPrefab, menuButtonPos, Quaternion.identity).GetComponent<SpriteRenderer>();
+		menuButton.transform.localScale = new Vector3(blockLocalScale,blockLocalScale,1f) * 0.325f;
 		
 
 		for (int i = 0; i < 2; i++)
@@ -121,7 +149,7 @@ public class MainScript : MonoBehaviour
 			tempPanel.ChangeColor(Color.gray);
 			interfaceHighlightPanels.Add(tempPanel);
 		}
-		mainMenuObject.SendMessage("SetUpMenu");
+		
 		allInstantiationCheckBoxes = new List<InstantiationCheckBox>();
 		for(int i = 0; i < 3;i++)
 		{
@@ -139,15 +167,19 @@ public class MainScript : MonoBehaviour
 		//positionOfScoreTextBackground += new Vector3(Screen.width * 0.0008f, (Screen.height * 0.01f) - (Screen.width * 0.0001f), 0f);
 		Instantiate(scoreScreenBackgroundPrefab, positionOfScoreTextBackground, Quaternion.identity).transform.localScale = new Vector3(MainScript.blockLocalScale,MainScript.blockLocalScale,1f);
 
-		scoreText.text = "";
+		scoreTextMesh.text = "";
 		Vector3 originalPosition = new Vector3(Screen.width * 0.5f, Screen.height * 0.5f);
-		for (int i = 0; i < mainMenuTextBoxes.Count; i++)
+		/*for (int i = 0; i < mainMenuTextBoxes.Count; i++)
 		{
 			UnityEngine.UI.Text tempText = mainMenuTextBoxes[i];
 			tempText.transform.position = originalPosition + new Vector3(0f, Screen.width * 0.1f, 0f) + new Vector3(0f, i * Screen.width * -0.25f);
 			tempText.enabled = false;
+		}*/
+		for(int i = 0; i < mainMenuTextMeshBoxes.Count;i++){
+			TextMeshProUGUI text = mainMenuTextMeshBoxes[i];
+			text.transform.position = originalPosition + new Vector3(0f,Screen.width * 0.1f,0f) + new Vector3(0f,i * Screen.width * -0.25f);
+			text.enabled = false;
 		}
-
 		//scoreTextTransform.rect = new Rect(scoreTextTransform.position, new Vector2(Screen.width * 0.5f, Screen.height * 0.2f));
 
 		//scoreTextTransform.position = new Vector3(Screen.width * 0.5f, Screen.height * -0.15f, 0f);
@@ -175,8 +207,17 @@ public class MainScript : MonoBehaviour
 		topCollider.localScale = new Vector3(blockLocalScale * 20f,blockLocalScale * 5f,1f);
 		CreateTheBoard(20, 30);
 		//StartTheGame();
-		
+		menuScript.SetUpMenu();
+		SetThumbsticks(false);
+		thePlayer = Instantiate(playerPrefab, Vector3.zero, Quaternion.identity).transform;
+		thePlayer.GetComponent<ControlsScript>().SendMainMenuScript(mainMenuObject.GetComponent<MainMenuScript>());
+		//thePlayer.GetComponent<PlayerScript>().SetUpPlayer();
+		//thePlayer.GetComponent<ControlsScript>().SendMainMenuScript(main);
+		thePlayer.SendMessage("SetUpPlayer");		
+		controlScript = thePlayer.GetComponent<ControlsScript>();
+		//thePlayer.gameObject.SetActive(false);
 	}
+	public void SetThumbsticks(bool enableOn){	foreach(Image img in touchscreenThumbsticks){img.gameObject.SetActive(enableOn);}}
 	public void GetReadyToRemoveAdsButton()
     {
 		removeAdsEnabled = false;
@@ -250,8 +291,9 @@ public class MainScript : MonoBehaviour
 	}
 	public static void EndGame()
 	{
-		scoreText.transform.position = new Vector3(Screen.width * 0.8f, Screen.height - (Screen.width * 0.1f), 0f);
-		scoreText.enabled = false;
+		
+		scoreTextMesh.rectTransform.position = new Vector3(Screen.width * 0.8f, Screen.height - (Screen.width * 0.1f), 0f);
+		scoreTextMesh.enabled = false;
 		paused = true;
 		gameHasStarted = false;
         if (thePlayer) { thePlayer.SendMessage("KillPlayer"); }
@@ -294,10 +336,7 @@ public class MainScript : MonoBehaviour
 	}
 	public static void ChangeMenuTextVisibility(bool visibility)
     {
-		foreach (UnityEngine.UI.Text text in MainScript.mainMenuTextBoxes)
-		{
-			text.enabled = visibility;
-		}
+		foreach(TextMeshProUGUI pro in MainScript.mainMenuTextMeshBoxes){pro.enabled = visibility;}
 	}
 	public void OpenMenu()
 	{
@@ -352,7 +391,7 @@ public class MainScript : MonoBehaviour
 			}
 		}*/
 		currentGame.AddScore(10);
-		scoreText.text = currentGame.score.ToString();
+		scoreTextMesh.text = currentGame.score.ToString();
 	}
 	public static void CreateExplosionAt(Vector2 pointToExplode,Color explosionColor,float explosionLength,float explosionTime)
     {
@@ -393,22 +432,28 @@ public class MainScript : MonoBehaviour
 	}
 	public void StartTheGame()
 	{
+		SetThumbsticks(true);
 		gameHasStarted = true;
 		readyToEnd = false;
 		//blocksToGetOutOfTheWay = new List<MovingBlock>();
 		blocksToRemove = new List<EmptyBlock>();
 		ControlsScript.ResetCooldowns();
-		scoreText.text = "0";
-        if (tutorialMode) { scoreText.enabled = false; } else { scoreText.enabled = true; }
+		scoreTextMesh.text = "0";
+        if (tutorialMode) 
+		{
+			tutorialMessage.gameObject.SetActive(true);
+			tutorialMessage.SetupTutorialPage();
+			scoreTextMesh.enabled = false; 
+		} else { scoreTextMesh.enabled = true; }
 		gravity = new MovementAffector(Vector2.down, 2.5f, 0f, false, false, 0f, MovementAffectorType.arbitrary);
 		Vector3 lowerLeft = new Vector2(currentMap.lowerLeftCorner.x, currentMap.lowerLeftCorner.y);
 		paused = false;
 		currentGame = new Game();
 		currentMap = new GameMap(20, 30);
 		currentMap.lowerLeftCorner = lowerLeft;
-		thePlayer = Instantiate(playerPrefab, Vector3.zero, Quaternion.identity).transform;
-		//thePlayer.GetComponent<PlayerScript>().SetUpPlayer();
-		thePlayer.SendMessage("SetUpPlayer");
+		thePlayer.position = Vector3.zero;
+		thePlayer.GetComponent<PlayerScript>().Revive();
+		//thePlayer.gameObject.SetActive(true);
 		//CreateRandomDescendingPieceAlongTheTop();
 		//currentGame.allMovingBlocksInGame.Add(CreateRandomMovingBlock());
 	}
@@ -747,9 +792,8 @@ public class MainScript : MonoBehaviour
 		List<UtilityAbilityInstance> abilitiesToDestroy = new List<UtilityAbilityInstance>();
 		foreach(UtilityAbilityInstance reference in utilityAbilities)
         {
-
 			reference.abilityTransform.SendMessage("UpdateUtility");
-            if (reference.takesDirection) { reference.abilityTransform.SendMessage("SetDirection", reference.relevantTouchInterface); }
+            if (reference.requiresUpdate) { reference.abilityTransform.SendMessage("SetDirection", controlScript.GetShootDir()); }
 			if(reference.readyToDie)
 			{
 				abilitiesToDestroy.Add(reference);
@@ -769,11 +813,12 @@ public class MainScript : MonoBehaviour
 		{
 			if(!e.isUntaken && e.yPos > 24)
 			{
+				SetThumbsticks(false);
 				SetUpEndGameCleanup();
 			}
 		}
 		
-        if (readyToEnd) { SetUpEndGameCleanup();  }
+        if (readyToEnd) { SetThumbsticks(false);SetUpEndGameCleanup();  }
 	}
 	void CheckAboveEmptyBlocksForBlocksToRemove(EmptyBlock e)
     {
@@ -813,6 +858,7 @@ public class MainScript : MonoBehaviour
 		}
 
 	}
+	public void DisableTutorial(){tutorialMessage.gameObject.SetActive(false);}
 	public static void SetUpEndGameCleanup()
     {
         if (!tutorialMode)
@@ -821,7 +867,9 @@ public class MainScript : MonoBehaviour
 			waitToOpenMenuAfterDeath.ResetTimer();
 			CheckScoreAgainstHighScores(currentGame.score);
 			mainMenuObject.SendMessage("SetupEndGameScreen");
-			scoreText.transform.position = new Vector2(Screen.width * 0.5f, Screen.height - (Screen.width * 0.4f));
+			tutorialMessage.gameObject.SetActive(true);
+			tutorialMessage.SetupEndGame();
+			scoreTextMesh.transform.position = new Vector2(Screen.width * 0.5f, Screen.height - (Screen.width * 0.4f));
 			gameHasStarted = false;
 			blocksToRemove = new List<EmptyBlock>();
 			paused = true;
@@ -886,8 +934,13 @@ public class MainScript : MonoBehaviour
         }
 
 	}
+	void CheckController(){
+		bool hasController = Gamepad.current != null;
+		if(hasController != hasControllerInput){hasControllerInput = hasController;SetThumbsticks(!hasControllerInput);}
+	}
 	void FixedUpdate()
 	{
+		//CheckController();
 		/*if (removeAdsButton.gameObject.active == true) 
 		{ 
 			if (removeAdsEnabled != true) 
@@ -917,19 +970,23 @@ public class MainScript : MonoBehaviour
         {
             if (waitToOpenMenuAfterDeath.hasFinished)
             {
-				for (int i = 0; i < Input.touchCount; i++)
+				for (int i = 0; i < Touchscreen.current.touches.Count; i++)
 				{
-					if (Input.GetTouch(i).phase == TouchPhase.Began)
+					TouchControl touch = Touchscreen.current.touches[i];
+					if (touch.phase.ReadValue() == UnityEngine.InputSystem.TouchPhase.Began)
 					{
 						EndGame();
 						
 						if(PlayerPrefs.GetInt("removeAds",0) == 0)
                         {
 							isShowingAd = true;
-							AdsManagerScript.ShowInterstitialAd();
+							//AdsManagerScript.ShowInterstitialAd();//THIS IS WHERE WE SHOW TH AD
+							advertisement.ShowAd();
                         }
                         else
                         {
+							tutorialMessage.DisableTutorial();
+							gameHasStarted = false;
 							mainMenuObject.SendMessage("StartOpeningMenu");
 						}
 					}
@@ -939,6 +996,33 @@ public class MainScript : MonoBehaviour
             {
 				waitToOpenMenuAfterDeath.AddTime(Time.deltaTime);
             }
+		}else
+		{
+			bool tappedMenu = false;
+			if(Time.time > 0.25f)
+			{
+				if(menuTapCounter.hasFinished)
+				{
+					for (int i = 0; i < Touchscreen.current.touches.Count; i++)
+					{
+						TouchControl t = Touchscreen.current.touches[i];
+						switch (t.phase.ReadValue())
+						{
+							case UnityEngine.InputSystem.TouchPhase.Began:
+								Vector3 realPos = Camera.main.ScreenToWorldPoint(t.position.ReadValue());
+								Vector3 diff = realPos - MainScript.menuButton.transform.position;diff.z = 0f;
+								//Debug.Log(diff.magnitude + " from Menu button");
+								if(diff.magnitude < MainScript.blockHeight * 2f){tappedMenu = true;menuTapCounter.ResetTimer();}
+							break;
+						}
+					}
+					if(tappedMenu)
+					{
+						mainMenuObject.GetComponent<MainMenuScript>().HasTappedMenuButton();
+					}
+				}else{menuTapCounter.AddTime(Time.deltaTime);}
+				
+			}
 			
 		}
 		
@@ -997,8 +1081,8 @@ public class Game
 }
 public class GameSettings
 {
-	public float timeBetweenDescendingPieceSpawns = 7.5f;
-	public float timeBetweenRandomMovingBlockSpawns = 4.5f;
+	public float timeBetweenDescendingPieceSpawns = 5f;
+	public float timeBetweenRandomMovingBlockSpawns = 1.5f;
 
 }
 public class Counter
@@ -1089,6 +1173,7 @@ public class SpriteInteractionObject
 		}
     }
 }
+
 public class MainMenu
 {
 	/*GUI.Box(new Rect(Screen.width * 0.2f,Screen.height *0.4f,Screen.width *0.6f,Screen.height * 0.2f),"poop");
@@ -1105,12 +1190,14 @@ public class UtilityAbilityInstance
 	public Transform abilityTransform;
 	public bool readyToDie = false;
 	public bool takesDirection = false;
+	public bool requiresUpdate = false;
 	public TouchInterface relevantTouchInterface;
-	public UtilityAbilityInstance(Transform theTransform,bool ifReadyToDie,bool itTakesDirection, Counter theDeathTimer)
+	public UtilityAbilityInstance(Transform theTransform,bool ifReadyToDie,bool itTakesDirection, Counter theDeathTimer,bool requiredUpdate)
     {
 		deathTimer = theDeathTimer;
 		readyToDie = ifReadyToDie;
 		takesDirection = itTakesDirection;
 		abilityTransform = theTransform;
+		requiresUpdate = requiredUpdate;
     }
 }

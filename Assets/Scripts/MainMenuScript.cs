@@ -1,13 +1,21 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.UI;
 using UnityEngine.Purchasing;
 
 public class MainMenuScript : MonoBehaviour
 {
+    bool hasTappedMenuButton;
+	public InputAction escape;
+    public static NewControls controls;
     public static bool isBuyingRemoveAds = false;
-
+    public List<SpriteRenderer> tutorialButtons;
+    public static Vector3 menuButtonPos;
+    public static Vector3 nextButtonPos;
+    public static Vector3 prevButtonPos;
     public Sprite molecularBurstSprite;
     public Sprite pusherBulletSprite;
     public Sprite shurikenSprite;
@@ -89,17 +97,38 @@ public class MainMenuScript : MonoBehaviour
         SelectIcon(allUtilityAbilities[1].thisReferenceIcon);
         SelectIcon(allUtilityAbilities[0].thisReferenceIcon);
     }
+    void SetupTutorialButtons()
+    {
+        menuButtonPos = new Vector3(Screen.width * 0.00425f,Screen.height * 0.0045f,0f);
+        nextButtonPos = new Vector3(Screen.width * 0.00425f,Screen.height * 0.0015f,0f);
+        prevButtonPos = new Vector3(Screen.width * -0.00425f,Screen.height * 0.0015f,0f);
+        tutorialButtons[0].transform.position = menuButtonPos;
+        tutorialButtons[2].transform.position = prevButtonPos;
+        tutorialButtons[1].transform.position = nextButtonPos;
+        //tutorialButtons[3].transform.position = new Vector3(Screen.width * 0.00425f,Screen.height * 0.0045f,0f);
+        for(int i = 1; i < tutorialButtons.Count;i++)
+        {
+            SpriteRenderer r = tutorialButtons[i];
+            r.transform.localScale = new Vector3(MainScript.blockLocalScale,MainScript.blockLocalScale,1f) * 0.35f;
+            r.enabled = true;
+        }
+        
+    }
     public void SetUpMenu()
     {
         iapManager = iapTransform.GetComponent<MyIAPManager>();
         //removeAdsButton.transform.localScale = new Vector3((0.5f * Screen.width )/ 124f, (0.5f *Screen.width )/ 124f, 1f);
+        MainMenuScript.controls = new NewControls();
+        escape = MainMenuScript.controls.Player.Escape;
         menuOpenPosition = transform.position;
         menuClosedPosition = menuOpenPosition + new Vector3(Screen.width * 0.01f, Screen.height * 0.01f, 0f);
         tutorialScreenParent = tutorialScreenParentHolder;
         tutorialScreenParent.parent = null;
         tutorialScreenParent.position = new Vector3(0f, (Screen.height * 0.005f) - (Screen.width * 0.005f), -3f);
         tutorialScreenParentOriginalPosition = tutorialScreenParent.position;
-        disableControlsCounter = new Counter(0.1f);
+        
+        foreach(SpriteRenderer r in tutorialButtons){r.transform.localScale = new Vector3(MainScript.blockLocalScale,MainScript.blockLocalScale,1f) * 0.35f;r.enabled = false;}
+        disableControlsCounter = new Counter(0.5f);
         iconSelectors = new IconSelecter[3];
         for(int i = 0;i < 3; i++)
         {
@@ -121,7 +150,7 @@ public class MainMenuScript : MonoBehaviour
             new UtilityAbilityReference(UtilityActivatesOn.shoot, 3.25f, "KnockBackGrenadePrefab", true, knockBackGrenadeSprite, InterfaceType.Shoot,true,"Knockback Grenade") ,
             new UtilityAbilityReference(UtilityActivatesOn.shoot,3.5f,"BlunderBussPrefab",true,blunderbussSprite,InterfaceType.Shoot,true,"Sonic Blunderbuss"),
             new UtilityAbilityReference(UtilityActivatesOn.shoot,5.75f,"SlingShotJumpPrefab",true,slingShotJumpSprite,InterfaceType.Move,false,"Slingshot Jump"),
-            new UtilityAbilityReference(UtilityActivatesOn.shootThenFollowThrough,2.5f,"ExplosiveDronePrefab",true,explosiveDroneSprite,InterfaceType.Shoot,false,"Explosive Drone"),
+            new UtilityAbilityReference(UtilityActivatesOn.shootThenFollowThrough,2.5f,"ExplosiveDronePrefab",false,explosiveDroneSprite,InterfaceType.Shoot,false,"Explosive Drone"),
             new UtilityAbilityReference(UtilityActivatesOn.begin,5.5f,"GravityFieldPrefab",false, gravityFieldSprite,InterfaceType.Move,false,"Gravity Field")
         };
         
@@ -189,6 +218,7 @@ public class MainMenuScript : MonoBehaviour
             }
         }
         //Vector3 tutorialScreenLowerLeftCorner = lowerLeftCorner + (Vector3.up * MainScript.blockWidth * 22.5f);
+        /*
         Vector3 tutorialScreenLowerLeftCorner = tutorialScreenParentOriginalPosition + new Vector3(MainScript.blockWidth * -7.5f,MainScript.blockWidth * -0.5f,0f);
         
         Vector3 tutorialScreenPositionOfCenter = tutorialScreenLowerLeftCorner + new Vector3(MainScript.blockWidth * 7.5f, MainScript.blockWidth * 4.5f, 0f);
@@ -224,10 +254,11 @@ public class MainMenuScript : MonoBehaviour
             tutorialScreenBackground.ChangeColor(Color.black);
             tutorialScreenRenders.Add(tutorialScreenBackground);
             tutorialScreenBackground.renderer.transform.localScale = new Vector3(MainScript.blockLocalScale * 14f, MainScript.blockLocalScale * 8f, 1f);
-            transform.position = menuOpenPosition;
         }
+        */
+        transform.position = menuOpenPosition;
         Vector3 halfABlock = new Vector3(MainScript.blockWidth * 0.5f, MainScript.blockWidth * 0.5f, -1f);
-        Vector3 bottomCenter = lowerLeftCorner + new Vector3(7f * MainScript.blockWidth, 0f, 0f);
+        Vector3 bottomCenter = lowerLeftCorner + new Vector3(9f * MainScript.blockWidth, 0f, 0f);
         playGameButton = Instantiate(playGameButtonPrefab, bottomCenter + (Vector3.up * MainScript.blockWidth * 16f) + halfABlock, Quaternion.identity).transform;
         playGameButton.localScale = new Vector3(MainScript.blockWidth * 8f, MainScript.blockWidth * 8f, 1f);
         playGameButton.parent = transform;
@@ -314,7 +345,7 @@ public class MainMenuScript : MonoBehaviour
     public void StartOpeningMenu()
     {
         MainScript.LockInMovingBlocks();
-        
+        disableControlsCounter.ResetTimer();
         isOpeningMenu = true;
         SetUpMainMenu();
     }
@@ -360,7 +391,7 @@ public class MainMenuScript : MonoBehaviour
         ChangeVisibility(true);
         Vector3 halfABlock = new Vector3(MainScript.blockWidth * 0.5f, MainScript.blockWidth * 0.5f, -1f);
         Vector3 tempLowerLeftCorner = transform.position + new Vector3(MainScript.blockWidth * -8f, MainScript.blockWidth * -15f, 0f);
-        Vector3 bottomCenter = tempLowerLeftCorner + new Vector3(7f * MainScript.blockWidth, 0f, 0f);
+        Vector3 bottomCenter = tempLowerLeftCorner + new Vector3(7.0f * MainScript.blockWidth, 0f, 0f);
         float heightDiffFromMiddle = Screen.width * 0.55f;
         float heightFromBottom = (Screen.height * 0.5f) - heightDiffFromMiddle;
         removeAdsButton.transform.position = new Vector3(removeAdsButton.transform.position.x, heightFromBottom, removeAdsButton.transform.position.z);
@@ -391,9 +422,10 @@ public class MainMenuScript : MonoBehaviour
         allButtons[3].theTransform.position = bottomCenter + (Vector3.up * MainScript.blockWidth * (4.5f + additionalYPush)) + halfABlock;
         
         
-        if (MainScript.gameHasStarted ) { allButtons[3].render.ChangeColor(Color.red); }
+        if (MainScript.gameHasStarted ) { allButtons[3].render.ChangeColor(Color.red); allButtons[2].render.ChangeColor(Color.red); }
         else
         {
+            allButtons[2].render.ChangeColor(Color.white); 
             allButtons[3].render.ChangeColor(Color.white);
         }
     }
@@ -468,9 +500,13 @@ public class MainMenuScript : MonoBehaviour
             currentAbility.thisReferenceIcon.theTransform.position = new Vector3(iconPosition.x, iconPosition.y, -3.1f);
             if (currentAbility.prefabName == ControlsScript.currentTriggerAbility.prefabName) { iconSelectors[2].theTransform.position = new Vector3(currentAbility.thisReferenceIcon.theTransform.position.x, currentAbility.thisReferenceIcon.theTransform.position.y, -3.11f); }
         }
-        MainScript.mainMenuTextBoxes[0].text =  ControlsScript.currentMovementAbility.abilityName;
+        /*MainScript.mainMenuTextBoxes[0].text =  ControlsScript.currentMovementAbility.abilityName;
         MainScript.mainMenuTextBoxes[1].text =  ControlsScript.currentUtilityAbility.abilityName;
-        MainScript.mainMenuTextBoxes[2].text =  ControlsScript.currentTriggerAbility.prefabName;
+        MainScript.mainMenuTextBoxes[2].text =  ControlsScript.currentTriggerAbility.prefabName;*/   //what used to be there, now trying
+        MainScript.mainMenuTextMeshBoxes[0].text = ControlsScript.currentMovementAbility.abilityName;
+        MainScript.mainMenuTextMeshBoxes[1].text = ControlsScript.currentUtilityAbility.abilityName;
+        MainScript.mainMenuTextMeshBoxes[2].text = ControlsScript.currentTriggerAbility.abilityName;
+
         /*for(int i = 0;i < allIcons.Count; i++)
         {
             AbilityIcon icon = allIcons[i];
@@ -493,33 +529,34 @@ public class MainMenuScript : MonoBehaviour
     {
         //List<Touch> allTouchesThisFrame = Input.Get
     }
-    void DoesThisTouchPushAButton(Touch t)
+    void DoesThisTouchPushAButton(TouchControl t)
     {
+        Vector2 pos = t.position.ReadValue();
         if(currentState == MenuState.mainMenu)
         {
             foreach (MenuButton b in allButtons)
             {
-                if (b.IsPointInsideButton(t.position))
+                if (b.IsPointInsideButton(pos))
                 {
                     PressButton(b);
                 }
             }
         }else if(currentState == MenuState.loadOut)
         {
-            if(GetButtonWithThisType(MenuButtonType.Loadout).IsPointInsideButton(t.position))
+            if(GetButtonWithThisType(MenuButtonType.Loadout).IsPointInsideButton(pos))
             {
                 SetUpMainMenu();
             }
             foreach(AbilityIcon icon in allIcons)
             {
-                if (icon.IsPointInsideButton(t.position))
+                if (icon.IsPointInsideButton(pos))
                 {
                     SelectIcon(icon);
                 }
             }
         }else if(currentState == MenuState.highScore)
         {
-            if (GetButtonWithThisType(MenuButtonType.HighScore).IsPointInsideButton(t.position))
+            if (GetButtonWithThisType(MenuButtonType.HighScore).IsPointInsideButton(pos))
             {
                 SetUpMainMenu();
             }
@@ -528,10 +565,10 @@ public class MainMenuScript : MonoBehaviour
     }
     public void ChangeTutorialScreenVisibility(bool visibilityState)
     {
-        foreach(SpriteInteractionObject temp in tutorialScreenRenders)
+        /*foreach(SpriteInteractionObject temp in tutorialScreenRenders)
         {
             temp.ChangeVisibility(visibilityState);
-        }
+        }*/
     }
     void SelectIcon(AbilityIcon theIcon)
     {
@@ -545,16 +582,20 @@ public class MainMenuScript : MonoBehaviour
                     iconSelectors[0].theTransform.position = new Vector3(theIcon.theTransform.position.x, theIcon.theTransform.position.y, -3.11f);
                     ControlsScript.currentMovementAbility = new UtilityAbility(currentReference);
                     ControlsScript.currentMovementAbilitySprite = currentReference.iconSprite;
-                    MainScript.mainMenuTextBoxes[0].text =  currentReference.nameOfAbility;
+                    //MainScript.mainMenuTextBoxes[0].text =  currentReference.nameOfAbility;
+                    MainScript.mainMenuTextMeshBoxes[0].text =  currentReference.nameOfAbility;
                     MainScript.interfaceHighlightPanels[0].currentInterfaceAbilityIcon.render.ChangeTexture(currentReference.iconSprite);
+                    MainScript.interfaceHighlightPanels[0].currentAbilityTimer = ControlsScript.currentMovementAbility.utilityCounter;
                     break;
                 case InterfaceType.Shoot:
 
                     iconSelectors[1].theTransform.position = new Vector3(theIcon.theTransform.position.x, theIcon.theTransform.position.y, -3.11f);
                     ControlsScript.currentUtilityAbility = new UtilityAbility(currentReference);
                     ControlsScript.currentUtilityAbilitySprite = currentReference.iconSprite;
-                    MainScript.mainMenuTextBoxes[1].text =  currentReference.nameOfAbility;
+                    //MainScript.mainMenuTextBoxes[1].text =  currentReference.nameOfAbility;
+                    MainScript.mainMenuTextMeshBoxes[1].text =  currentReference.nameOfAbility;
                     MainScript.interfaceHighlightPanels[1].currentInterfaceAbilityIcon.render.ChangeTexture(currentReference.iconSprite);
+                    MainScript.interfaceHighlightPanels[1].currentAbilityTimer = ControlsScript.currentUtilityAbility.utilityCounter;
                     break;
                 case InterfaceType.Trigger:
                     
@@ -566,14 +607,16 @@ public class MainMenuScript : MonoBehaviour
         {
             iconSelectors[2].theTransform.position = new Vector3(theIcon.theTransform.position.x, theIcon.theTransform.position.y, -3.11f);
             ControlsScript.currentTriggerAbility = new TriggerAbility(GetTriggerReferenceFromIcon(theIcon));
-            MainScript.mainMenuTextBoxes[2].text =  ControlsScript.currentTriggerAbility.abilityName;
+            //MainScript.mainMenuTextBoxes[2].text =  ControlsScript.currentTriggerAbility.abilityName;
+            MainScript.mainMenuTextMeshBoxes[2].text =  ControlsScript.currentTriggerAbility.abilityName;
         }
     }
     public void SetupEndGameScreen()
     {
         tutorialScreenParent.position = tutorialScreenParentOriginalPosition;
         ChangeTutorialScreenVisibility(true);
-        tutorialPageRenders[0].ChangeTexture(gameOverScreen);
+        
+        //tutorialPageRenders[0].ChangeTexture(gameOverScreen);
     }
     void SetUpHighScore()
     {
@@ -590,12 +633,14 @@ public class MainMenuScript : MonoBehaviour
         MainScript.ChangeMenuTextVisibility(true);
         Vector3 topRowCenterPosition = lowerLeftCorner + new Vector3(MainScript.blockWidth * 7f, MainScript.blockWidth * 19f, 0f) + new Vector3(MainScript.blockHeight * 0.5f, MainScript.blockHeight * -0.5f, -3f);
         highScorePlacers[0].renderer.transform.position = topRowCenterPosition;
-        MainScript.mainMenuTextBoxes[0].text = PlayerPrefs.GetInt("1stHighScore", 0).ToString();
+        //MainScript.mainMenuTextBoxes[0].text = PlayerPrefs.GetInt("1stHighScore", 0).ToString();
+        //MainScript.mainMenuTextMeshBoxes[0].text = PlayerPrefs.GetInt("1stHighScore", 0).ToString();
+        MainScript.mainMenuTextMeshBoxes[0].text = PlayerPrefs.GetInt("1stHighScore", 0).ToString();
         Vector3 middleRowCenterPosition = topRowCenterPosition + new Vector3(0f, MainScript.blockWidth * -5f, -3f);
         highScorePlacers[1].renderer.transform.position = middleRowCenterPosition;
-        MainScript.mainMenuTextBoxes[1].text = PlayerPrefs.GetInt("2ndHighScore", 0).ToString();
+        MainScript.mainMenuTextMeshBoxes[1].text = PlayerPrefs.GetInt("2ndHighScore", 0).ToString();
         Vector3 bottomRowCenterPosition = topRowCenterPosition + new Vector3(0f, MainScript.blockWidth * -10f, -3f);
-        MainScript.mainMenuTextBoxes[2].text = PlayerPrefs.GetInt("3rdHighScore", 0).ToString();
+        MainScript.mainMenuTextMeshBoxes[2].text = PlayerPrefs.GetInt("3rdHighScore", 0).ToString();
         highScorePlacers[2].renderer.transform.position = bottomRowCenterPosition;
     }
     public void DeactivateRemoveAdsButton()
@@ -617,10 +662,10 @@ public class MainMenuScript : MonoBehaviour
                     if (currentState == MenuState.mainMenu)
                     {
                         DeactivateRemoveAdsButton();
-
+                        MainScript temp = Camera.main.GetComponent<MainScript>();
                         if (!MainScript.gameHasStarted || MainScript.tutorialMode)
                         {
-                            MainScript temp = Camera.main.GetComponent<MainScript>();
+                            
                             if (MainScript.gameHasStarted) { MainScript.EndGame(); }
                             MainScript.tutorialMode = false;
                             titleScreen.ChangeVisibility(false);
@@ -631,6 +676,7 @@ public class MainMenuScript : MonoBehaviour
                         }
                         else
                         {
+                            temp.SetThumbsticks(true);
                             CloseMenu();
                             menuIsActive = false;
                         }
@@ -661,13 +707,15 @@ public class MainMenuScript : MonoBehaviour
                             SetupDefaultAbilities();
                             titleScreen.ChangeVisibility(false);
                             currentTutorialPage = 0;
-                            tutorialPageRenders[0].renderer.transform.GetComponent<TutorialPageScript>().SwitchToThisPage(currentTutorialPage);
+                            foreach(SpriteRenderer r in tutorialButtons){r.enabled = true;}
+                            //tutorialPageRenders[0].renderer.transform.GetComponent<TutorialPageScript>().SwitchToThisPage(currentTutorialPage);
                             CloseMenu();
                             MainScript.tutorialMode = true;
                             tutorialScreenParent.position = tutorialScreenParentOriginalPosition;
                             Camera.main.GetComponent<MainScript>().StartTheGame();
                             menuIsActive = false;
                             ChangeTutorialScreenVisibility(true);
+                            //SetupTutorialButtons();
                         }
                         else if (MainScript.tutorialMode)
                         {
@@ -688,26 +736,26 @@ public class MainMenuScript : MonoBehaviour
             }
         }
     }
+    public void HasTappedMenuButton(){hasTappedMenuButton = true;}
     // Update is called once per frame
     void Update()
     {
-        if (MainScript.paused) { if (!disableControlsCounter.hasFinished) { disableControlsCounter.AddTime(Time.deltaTime); } }
-        
-
-        if (MainScript.paused && menuIsActive && disableControlsCounter.hasFinished)
+        //Debug.Log(escape.triggered);
+        if (MainScript.paused && menuIsActive && disableControlsCounter.hasFinished && Time.time > 0.25f)//Added the time check cause the remote thing didn't always work
         {
-            for (int i = 0; i < Input.touchCount; i++)
+            
+            for (int i = 0; i < Touchscreen.current.touches.Count; i++)
             {
-                
-                Touch t = Input.GetTouch(i);
-                if(t.phase == TouchPhase.Began)
+                TouchControl t = Touchscreen.current.touches[i];
+                if(t.phase.ReadValue() == UnityEngine.InputSystem.TouchPhase.Began)
                 {
                     DoesThisTouchPushAButton(t);
                 }
-                
             }
-            if (Input.GetKeyDown(KeyCode.Escape))
+            if (ControlsScript.pressedEscape || hasTappedMenuButton || escape.triggered)
             {
+                //Debug.Log(ControlsScript.pressedEscape);
+                //Debug.Log(hasTappedMenuButton);
                 switch (currentState)
                 {
                     case MenuState.loadOut:
@@ -719,8 +767,17 @@ public class MainMenuScript : MonoBehaviour
                         Application.Quit();
                         break;
                 }
+                hasTappedMenuButton = false;
+                ControlsScript.pressedEscape = false;
             }
         }
+        if (MainScript.paused) { if (!disableControlsCounter.hasFinished) { disableControlsCounter.AddTime(Time.deltaTime); } }
+        if(!MainScript.paused && disableControlsCounter.hasFinished)
+        {
+            
+        }
+        //if(hasTappedMenuButton){hasTappedMenuButton = false;}
+        hasTappedMenuButton = false;
     }
 }
 public class MenuButton

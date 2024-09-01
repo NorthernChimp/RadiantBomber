@@ -31,10 +31,9 @@ public class ExplosiveDroneScript : MonoBehaviour
     }
     public void SetDirection(Vector2 fireDirection)
     {
-		rbody = GetComponent<Rigidbody2D>();
+		
 		theFireDirection = fireDirection;
-		thisAbilityInstance = new UtilityAbilityInstance(transform,false,true,new Counter(time));
-		GetComponent<UtilityAbilityScript>().thisAbilityInstance = thisAbilityInstance;
+		
 		//MainScript.allU.Add(thisAbilityInstance);
 	}
     public void UpdateUtility()
@@ -54,13 +53,15 @@ public class ExplosiveDroneScript : MonoBehaviour
 			{
 				t.rotation = t.rotation * Quaternion.Euler(0f, 0f, rotationSpeed * Time.fixedDeltaTime);
 			}
-			theFireDirection = directingInterface.currentDirection.normalized;
+			//theFireDirection = directingInterface.currentDirection.normalized;
 			rbody.MovePosition(transform.position + ((Vector3)theFireDirection * speed * Time.fixedDeltaTime));
 		}
     }
 	public void UseUtility()
     {
-
+		rbody = GetComponent<Rigidbody2D>();
+		thisAbilityInstance = new UtilityAbilityInstance(transform,false,true,new Counter(time),true);
+		GetComponent<UtilityAbilityScript>().thisAbilityInstance = thisAbilityInstance;
 		deathCounter = new Counter(timeBeforeDeath);
 		MainScript.utilityAbilities.Add(thisAbilityInstance);
 		directingInterface = MainScript.thePlayer.GetComponent<ControlsScript>().shootInterface;

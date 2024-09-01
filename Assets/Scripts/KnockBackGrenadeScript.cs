@@ -42,7 +42,7 @@ public class KnockBackGrenadeScript : MonoBehaviour
     public void UseUtility()
     {
         rbody = transform.GetComponent<Rigidbody2D>();
-        thisAbilityInstance = new UtilityAbilityInstance(transform, false, false, new Counter(time * 3f));
+        thisAbilityInstance = new UtilityAbilityInstance(transform, false, false, new Counter(time * 3f),false);
         MainScript.utilityAbilities.Add(thisAbilityInstance);
 		thisAbilityInstance.takesDirection = false;
         //deathCounter = new Counter(time);

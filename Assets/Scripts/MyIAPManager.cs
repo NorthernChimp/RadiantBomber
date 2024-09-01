@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Purchasing;
+using UnityEngine.Purchasing.Extension;
 using UnityEngine.UI;
 using UnityEngine.Purchasing.Security;
 
 
-public class MyIAPManager : MonoBehaviour, IStoreListener
+public class MyIAPManager : MonoBehaviour, IStoreListener,IDetailedStoreListener
 {
     private static IStoreController m_StoreController;          // The Unity Purchasing system.
     private static IExtensionProvider m_StoreExtensionProvider; // The store-specific Purchasing subsystems.
@@ -18,8 +19,6 @@ public class MyIAPManager : MonoBehaviour, IStoreListener
     public static string NONCONSUMABLE1 = "nonconsume1";
     public static string removeAds = "com.dannyconrad.radiantbomber.removeads";
     public static string WEEKLYSUB = "weeklysub";
-   
-    public Text myText;
    
     void Awake()
     {
@@ -50,7 +49,7 @@ public class MyIAPManager : MonoBehaviour, IStoreListener
     {
         if (IsInitialized())
         {
-            
+            Debug.Log("this stops it");
             return;
         }
 
@@ -64,6 +63,7 @@ public class MyIAPManager : MonoBehaviour, IStoreListener
 
         //MyDebug("Starting Initialized...");
         UnityPurchasing.Initialize(this, builder);
+        
 
     }
 
@@ -96,7 +96,7 @@ public class MyIAPManager : MonoBehaviour, IStoreListener
     
     public void RestorePurchases()
     {
-        m_StoreExtensionProvider.GetExtension<IAppleExtensions>().RestoreTransactions(result => {
+        /*m_StoreExtensionProvider.GetExtension<IAppleExtensions>().RestoreTransactions(result => {
             if (result)
             {
                 MyDebug("Restore purchases succeeded.");
@@ -105,7 +105,54 @@ public class MyIAPManager : MonoBehaviour, IStoreListener
             {
                 MyDebug("Restore purchases failed.");
             }
-         });
+         });*/
+         m_StoreExtensionProvider.GetExtension<IAppleExtensions>().RestoreTransactions((success, error) =>
+    {
+        if (success)
+        {
+            Debug.Log("Transactions restored successfully.");
+        }
+        else
+        {
+            Debug.LogError($"Failed to restore transactions. Error: {error}");
+        }
+    });
+    }
+    public void OnPurchaseFailed(Product product, PurchaseFailureDescription failureDescription)
+    {
+        Debug.LogError($"Purchase of product '{product.definition.id}' failed due to {failureDescription.reason}: {failureDescription.message}");
+
+        // Handle different types of failure reasons
+        switch (failureDescription.reason)
+        {
+            case PurchaseFailureReason.PurchasingUnavailable:
+                Debug.LogError("Purchasing is unavailable. Check if the app store is set up correctly.");
+                break;
+            case PurchaseFailureReason.ExistingPurchasePending:
+                Debug.LogError("An existing purchase is pending. Please wait for it to complete.");
+                break;
+            case PurchaseFailureReason.ProductUnavailable:
+                Debug.LogError("The product is not available in the store.");
+                break;
+            case PurchaseFailureReason.SignatureInvalid:
+                Debug.LogError("The purchase signature is invalid.");
+                break;
+            case PurchaseFailureReason.UserCancelled:
+                Debug.Log("The user canceled the purchase.");
+                break;
+            case PurchaseFailureReason.PaymentDeclined:
+                Debug.LogError("The payment was declined. Check payment method and try again.");
+                break;
+            case PurchaseFailureReason.DuplicateTransaction:
+                Debug.LogWarning("The transaction is a duplicate.");
+                break;
+            case PurchaseFailureReason.Unknown:
+            default:
+                Debug.LogError("An unknown error occurred during the purchase.");
+                break;
+        }
+
+        // Optionally, you can handle UI updates or other responses to the failure here.
     }
 
     void BuyProductID(string productId)
@@ -181,7 +228,14 @@ public class MyIAPManager : MonoBehaviour, IStoreListener
         MainMenuScript.isBuyingRemoveAds = false;
         MyDebug("Deferred product " + product.definition.id.ToString());
     }
-
+    public void OnInitializeFailed(InitializationFailureReason error, string message)
+    {
+        // Handle the initialization failure
+        Debug.LogError($"Initialization Failed: {error.ToString()} - {message}");
+        
+        // You can take further action based on the error, like displaying a message to the user
+        // or attempting to reinitialize the purchasing system.
+    }
     public void OnInitializeFailed(InitializationFailureReason error)
     {
         // Purchasing set-up has not succeeded. Check error for reason. Consider sharing this reason with the user.
@@ -234,7 +288,7 @@ public class MyIAPManager : MonoBehaviour, IStoreListener
     {
         
         Debug.Log(debug);
-        myText.text += "\r\n" + debug;
+        //myText.text += "\r\n" + debug;
     }
 
 }
